@@ -512,6 +512,8 @@ python gdp.py -c config/config.yaml --threads 1 --upload-only upload-files  /ana
 python gdp.py -c config/config.yaml --upload-only upload-files  /analyses2/houriiyah/nCoV_genomes/minion_96_protocol/run485/temp/*.fastq.gz
 python gdp.py -c ./config/config_bact.yaml upload-files --threads 1 --upload-only  /analyses2/data/Cholera/temp/*.fastq.gz
 
+python gdp.py -c config/config.yaml --threads 1 --upload-only upload-files  /analyses2/houriiyah/HPV/KRISP0255_20230719/temp/*.fastq.gz
+
 
 cp /mnt/isilon/abbott/abbott_meta_b04_170123/K052005*.gz ../../CERI/abbott_meta_b05_190123/
 
@@ -822,3 +824,76 @@ infoseq -auto -only -name -length -noheading file.fasta
 ## vi find and replace all. https://linuxize.com/post/vim-find-replace/
 :%s/:/_/
 :%s/:/_/g [all]
+
+## jphmm:
+/Users/sanem/temp/CERI/TechnicalWorkingGroup/Recombination/jphmm/jpHMM/example/LDA
+
+/Users/sanem/temp/CERI/TechnicalWorkingGroup/Recombination/jphmm/jpHMM/src
+
+cp jpHMM /usr/local/bin/
+
+/Users/sanem/jpHMM/src/jpHMM -i AL.fas -s Query.fas -v HIV -j 1e-06 -a nucleic_Alphas_estimated_HIV.txt -b transition_priors.txt -e EP.txt -t TP.txt -c cons.txt
+
+# usage: jpHMM
+# 	[ -s  file containing the query sequence(s) ] 
+# 	[ -v  type of the given sequences (HIV or HCV)]
+# 
+# 	optional arguments:
+# 
+# 	[ -a  (opt.) file containing the priors for the estimation of the emission probabilities (include path to file here or with -P)] 
+# 	[ -b  (opt.) file containing the priors for the estimation of the transition probabilities] 
+# 	[ -i  (opt.) file containing the given multiple sequence alignment  (include path to file here or with -I)] 
+# 	[ -j  (opt.) probability of a jump from one subtype to any other subtype (default: HIV: 1e-9, HBV: 1e-7) ]
+# 	[ -B  (opt.) beam-width for the beam algorithm    (default: 1e-20) ]
+# 	[ -P  (opt.) input directory for emission priors (default: ./priors/, if not -a chosen) ]
+# 	[ -I  (opt.) input directory for alignment file (default: ./input/, if not -i chosen) ]
+# 	[ -o  (opt.) output directory for result files  (default: ./output/) ]
+# 	[ -Q  (opt.) algorithm to speed up Viterbi algorithm (beam_search or blat) (default: beam_search) ]
+# 	[ -C  (opt.) circular genome type: if chosen: circular genomes    (default: non-circular genomes) ]
+# 	[ -J  (opt.) kind of jumps in HMM (quadratic (from each ST to each ST) or linear (via a mute jump state)) (default: quadratic) ]
+# 
+# 	for usage of model probabilities that have been determined externally:
+# 
+# 	[ -e  (opt.) file containing the (external) emission probabilities ]
+# 	[ -t  (opt.) file containing the (external) transition probabilities ]
+# 	[ -c  (opt.) file containing the (external) consensus columns ]
+	
+	
+	jpHMM -s cluster85.fasta -v HIV  -a /Users/sanem/temp/CERI/TechnicalWorkingGroup/Recombination/jphmm/jpHMM/priors/emissionPriors_HIV.txt
+	
+	mv jpHMM ~/
+	
+	cd ~/temp/CERI/TechnicalWorkingGroup/Recombination/Tutorial/17/
+    
+    Failure of the transition priors input file.
+    libc++abi: terminating with uncaught exception of type Error
+
+    jpHMM -s cluster85.fasta -v HIV -a ~/jpHMM/priors/emissionPriors_HIV.txt
+	
+	## SCP multiple files
+	
+	ls -1 *-ONT_ONT | cut -d "-" -f 1 |  uniq | grep K04 > seq_ids.txt
+	scp sanjames@mrcad.mrc.ac.za@krisp.mrc.ac.za:/analyses2/data/Pangea_SJ/aga_hiv/aln/clusters/cluster85/\{cluster85.fasta2,cluster85.fasta11,cluster85.fasta14} .
+	
+
+#sed - modify begining of a line.
+#https://linuxconfig.org/add-character-to-the-beginning-of-each-line-using-sed
+
+## https://stackoverflow.com/questions/67744604/what-does-pipe-greater-than-mean-in-r
+##    |> is the base R "pipe" operator. It was new in version 4.1.0.
+
+pip install . --force-reinstall
+
+
+http://lonelyjoeparker.com/wp/?page_id=274#beast-note
+
+perl -pi.bak -e 's/[\n\r\R]+//gms' ~/temp/Collaborations/HIV/Marcel/beast_xlms/SC_CC/trees/bb-format/prot_seq_Cameroun_CRF02_AG_reduit+Gabon+EquatorialGuinea_finalV5_wDates_SC_CC_200ML_bb.trees
+sed -i '' "s/\[[^]]*\]//g"  ~/temp/Collaborations/HIV/Marcel/beast_xlms/SC_CC/trees/bb-format/prot_seq_Cameroun_CRF02_AG_reduit+Gabon+EquatorialGuinea_finalV5_wDates_SC_CC_200ML_bb.trees
+perl -pi.bak -e 's/\;/\;\n/g' ~/temp/Collaborations/HIV/Marcel/beast_xlms/SC_CC/trees/bb-format/prot_seq_Cameroun_CRF02_AG_reduit+Gabon+EquatorialGuinea_finalV5_wDates_SC_CC_200ML_bb.trees
+perl -pi.bak -e 's/=\ /=\ \[\&\R\]/gms' ~/temp/Collaborations/HIV/Marcel/beast_xlms/SC_CC/trees/bb-format/prot_seq_Cameroun_CRF02_AG_reduit+Gabon+EquatorialGuinea_finalV5_wDates_SC_CC_200ML_bb.trees
+
+java -jar ~/temp/Collaborations/HIV/Marcel/BaTS_beta/BaTS_beta.jar single ~/temp/Collaborations/HIV/Marcel/beast_xlms/SC_CC/trees/bb-format/prot_seq_Cameroun_CRF02_AG_reduit+Gabon+EquatorialGuinea_finalV5_wDates_SC_CC_200ML_bb.trees 1000 3
+
+
+/analyses2/data/SJ/BackUp/Mac/sanem/temp/Courses and Trainings
+ufsngsworkshop2023@gmail.com
