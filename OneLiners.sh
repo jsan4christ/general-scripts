@@ -897,3 +897,6 @@ java -jar ~/temp/Collaborations/HIV/Marcel/BaTS_beta/BaTS_beta.jar single ~/temp
 
 /analyses2/data/SJ/BackUp/Mac/sanem/temp/Courses and Trainings
 ufsngsworkshop2023@gmail.com
+
+
+ls -1 *.bam | rev | cut -c5- | rev

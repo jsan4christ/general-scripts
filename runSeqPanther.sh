@@ -18,16 +18,19 @@ seqpanther  codoncounter -bam Ko48924_K03455_HIVHXB2CG.bam -rid K03455\|HIVHXB2C
 seqpanther  codoncounter -bam Ko48924_K03455_HIVHXB2CG.bam -rid K03455\|HIVHXB2CG -ref K03455.fasta -gff K03455_modified.gff -e 0
 
 
-### Covid Refs:
-/Users/sanem/temp/Collaborations/covid/ref/NC_045512.2.fasta #Ref
-/Users/sanem/temp/Collaborations/covid/ref/NC_045512.2.gff   #Genemap
+### CCovid Refs:
+~/temp/covid/ref/NC_045512.2.fasta #Ref
+~/temp/covid/ref/NC_045512.2.gff   #Genemap
 
-### Moyo / Wonder analysis:
+### MMoyo / Wonder analysis:
 ref_id=NC_045512.2
-ref=/Users/sanem/temp/Collaborations/covid/ref/NC_045512.2.fasta
-genemap=/Users/sanem/temp/Collaborations/covid/ref/NC_045512.2.gff
+ref=/Users/sanemj/Documents/temp/Bioinformatics/SARS-CoV-2/ref/NC_045512.2.fasta
+genemap=/Users/sanemj/Documents/temp/Bioinformatics/SARS-CoV-2/ref/NC_045512.2.gff
 
-
+seqpanther  codoncounter -bam day21_merged.bam -rid ${ref_id} -ref ${ref} -gff ${genemap} -e 0 \
+-i sp-day21_merged-indels.bam \
+-s sp-day21_merged-sub.bam \
+-c sp-day21_merged-cc.bam
 
 samtools view -h BAMs_Final/Day08_Mid_pt214cB25-NC_045512.2-4-0-region.bam | head -n 8
 
@@ -50,6 +53,7 @@ column -s, -t < codon_output.csv| less -#2 -N -S
 
 samtools fastq Day28_merged-NC_045512.2-0-0-region.bam > Day21_ONT.fastq
 minimap2 -a -x map-ont -t 4  ${ref} Day21_ONT.fastq | samtools view -bS -F 4 - | samtools sort -o Day21_ONT.bam - 
+
 seqpanther  codoncounter -bam Day21_ONT.bam -rid ${ref_id} -ref ${ref} -gff ${genemap} -e 0
 
 

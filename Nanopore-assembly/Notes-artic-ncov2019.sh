@@ -417,3 +417,24 @@ artic minion --normalise 0 --threads 12 --scheme-directory /usr/local/biotools/a
 
 
 globalprotect launch-ui
+
+
+### for ONT
+
+parallel 'samtools fastq {}-consensus_alignment_sorted.REF_NC_045512.2_1_consensus.bam > {}_ONT.fastq' ::: $(ls *-consensus_alignment_sorted.REF_NC_045512.2_1_consensus.bam | xargs -n 1 basename | cut -d "-" -f1)
+
+parallel 'minimap2 -a -x map-ont -t 4  /Users/sanem/temp/Collaborations/covid/ref/NC_045512.2.fasta {}ONT.fastq | samtools view -bS -F 4 - | samtools sort -o {}_ONT.bam - ' :::  $(ls *_ONT.fastq | xargs -n 1 basename | cut -d "" -f1)
+
+parallel 'minimap2 -a -x map-ont -t 4  {2} {1}ONT.fastq | samtools view -bS -F 4 - | samtools sort -o {}_ONT.bam - ' :::  $(ls *_ONT.fastq | xargs -n 1 basename | cut -d "" -f1) ::: "/Users/sanem/temp/Collaborations/covid/ref/NC_045512.2.fasta"
+
+parallel 'lofreq indelqual --dindel -f {2}  -o {1}sorted_iq.bam {1}_ONT.bam' ::: $(ls *_ONT.bam | cut -d "" -f1)  ::: "/Users/sanem/temp/Collaborations/covid/ref/NC_045512.2.fasta"
+
+parallel 'lofreq call --call-indels --use-orphan -B --no-default-filter -f {2} -o {1}.lf.vcf {1}sorted_iq.bam  --force-overwrite' ::: $(ls *_iq.bam | cut -d "" -f1)  ::: "/Users/sanem/temp/Collaborations/covid/ref/NC_045512.2.fasta"
+
+
+
+parallel 'samtools fastq {}.bam > {}_ONT.fastq' ::: $(ls -1 *.bam | rev | cut -c5- | rev | less)
+
+parallel 'minimap2 -a -x map-ont -t 4  /Users/sanemj/Documents/temp/Bioinformatics/SARS-CoV-2/ref/NC_045512.2.fasta {}_ONT.fastq | samtools view -bS -F 4 - | samtools sort -o {}_ONT.bam - ' :::  $(ls -1 *_ONT.fastq | rev | cut -c11- | rev)
+
+seqpanther codoncounter -bam sp -ref /Users/sanemj/Documents/temp/Bioinformatics/SARS-CoV-2/ref/NC_045512.2.fasta -rid NC.045512 -gff /Users/sanemj/Documents/temp/Bioinformatics/SARS-CoV-2/ref/NC_045512.2.giff
