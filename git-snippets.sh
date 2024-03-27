@@ -133,3 +133,9 @@ brew install git-lfs
 git lfs install
 
 git lfs track  Fig2/BA1_SA_New_edit_Rename_FinalSTEXP100ML.trees
+
+git add .gitattributes
+
+git add Fig2/BA1_SA_New_edit_Rename_FinalSTEXP100ML.trees
+
+git commit -m "Add the trees file as lfs"

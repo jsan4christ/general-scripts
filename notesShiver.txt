@@ -1,0 +1,409 @@
+conda activate shiver
+
+shiver_init.sh MyInitDir config.sh MyRefAlignment.fasta \
+MyAdapters.fasta MyPrimers.fasta
+
+shiver_init.sh MyInitDir2 /Applications/biotools/shiver/config.sh HIV1_RIP_2020_genome_DNA.aln.fasta adapters.fasta primers.fasta
+
+Building a new DB, current time: 11/22/2023 22:15:23
+New DB name:   /Users/sanemj/Temp/Bioinformatics/HIV/BHP/MyInitDir2/ExistingRefsBlastDatabase
+New DB title:  /Users/sanemj/Temp/Bioinformatics/HIV/BHP/MyInitDir2/ExistingRefsUngapped.fasta
+Sequence type: Nucleotide
+Keep MBits: T
+Maximum file size: 1000000000B
+Adding sequences from FASTA; added 189 sequences in 0.0330861 seconds.
+
+
+/Applications/biotools/shiver/shiver_init.sh MyInitDir /Applications/biotools/shiver/config.sh HIV1_ALL_2021_genome_DNA.fasta \
+adapters.fasta primers.fasta
+
+makeblastdb -in HIV1_ALL_2021_genome_DNA.fasta -dbtype nucl -out blastDB/LANL2021 -hash_index
+
+❯ shiver_init.sh MyInitDir /Applications/biotools/shiver/config.sh HIV1_ALL_2021_genome_DNA.fasta adapters.fasta primers.fasta
+
+
+Building a new DB, current time: 11/18/2023 08:35:42
+New DB name:   /Users/sanemj/Temp/Bioinformatics/HIV/BHP/MyInitDir/ExistingRefsBlastDatabase
+New DB title:  /Users/sanemj/Temp/Bioinformatics/HIV/BHP/MyInitDir/ExistingRefsUngapped.fasta
+Sequence type: Nucleotide
+Keep MBits: T
+Maximum file size: 1000000000B
+Adding sequences from FASTA; added 5053 sequences in 0.359 seconds.
+
+makeblastdb -in HIV1_RIP_2020_genome_DNA.aln.fasta -dbtype nucl -out blastDB/RIPLANL2020 -hash_index
+
+iva -f fastq/066108B8DU02013604_PanBCPP3-E1A1L1P1S1C1R1_1.fastq.gz -r fastq/066108B8DU02013604_PanBCPP3-E1A1L1P1S1C1R1_2.fastq.gz 066108B8DU02013604_PanBCPP3_E1A1L1P1S1C1R1_shiver_out
+
+	Problem:
+	
+	❯ iva -f fastq/066108B8DU02013604_PanBCPP3-E1A1L1P1S1C1R1_1.fastq.gz -r fastq/066108B8DU02013604_PanBCPP3-E1A1L1P1S1C1R1_2.fastq.gz 066108B8DU02013604sshiver_out
+The following command failed with exit code 1
+bash run_kmc.sh
+
+The output was:
+
+*********
+Error: Error: Cannot open temporary file /Users/sanemj/Temp/Bioinformatics/HIV/BHP/066108B8DU02013604sshiver_out/tmp.run_kmc.6s38bb7m/kmc_00253.bin
+
+
+	Solution:
+	https://github.com/refresh-bio/KMC/issues/140
+	ulimit -n 2048
+	
+	https://www.biostars.org/p/301328/
+	
+
+# with RIP Alignment:
+
+conda create -n  shiver2 python=2.7 # shiver prefers python 2
+
+conda activate shiver2
+
+makeblastdb -in /Applications/biotools/shiver/info/B.FR.83.HXB2_LAI_IIIB_BRU.K03455.fasta -dbtype nucl -out blastDB/K03455 -hash_index
+
+/Applications/biotools/shiver/shiver_init.sh ShiverInitDir /Applications/biotools/shiver/config.sh HIV1_RIP_2020_genome_DNA.aln.fasta adapters.fasta primers.fasta
+
+iva -t 4 -f fastq/066108B8DU02013604_PanBCPP3-E1A1L1P1S1C1R1_1.fastq.gz -r fastq/066108B8DU02013604_PanBCPP3-E1A1L1P1S1C1R1_2.fastq.gz 066108B8DU02013604_PanBCPP3_E1A1L1P1S1C1R1_shiver_out
+
+iva -t 4 --trimmomatic /Applications/biotools/Trimmomatic-0.39/trimmomatic-0.39.jar --adapters adapters.fasta   --pcr_primers primers.fasta -f fastq/066108B8DU02013604_PanBCPP3-E1A1L1P1S1C1R1_1.fastq.gz -r fastq/066108B8DU02013604_PanBCPP3-E1A1L1P1S1C1R1_2.fastq.gz 066108B8DU02013604_PanBCPP3_E1A1L1P1S1C1R1_shiver_out
+
+/Applications/biotools/shiver/shiver_align_contigs.sh ShiverInitDir /Applications/biotools/shiver/config.sh contigs.fasta 066108B8DU02013604_PanBCPP3_E1A1L1P1S1C1R1
+
+## or directly via shiver
+
+/Applications/biotools/shiver/shiver_map_reads.sh ShiverInitDir /Applications/biotools/shiver/config.sh contigs.fasta 066108B8DU02013604_PanBCPP3_E1A1L1P1S1C1R1 \
+066108B8DU02013604_PanBCPP3_E1A1L1P1S1C1R1.blast 066108B8DU02013604_PanBCPP3_E1A1L1P1S1C1R1_cut_wRefs.fasta fastq/066108B8DU02013604_PanBCPP3-E1A1L1P1S1C1R1_1.fastq.gz fastq/066108B8DU02013604_PanBCPP3-E1A1L1P1S1C1R1_2.fastq.gz
+
+
+##ILIFU CHPC
+ulimit -n 8192
+
+/home/wchoga/biotools/Trimmomatic-0.39/trimmomatic-0.39.jar
+/home/wchoga/biotools/Trimmomatic-0.39/adapters
+
+parallel "cp {}* sample_set1/" ::: $(cat sample_set1.txt)
+
+iva -t 2 --trimmomatic /home/wchoga/biotools/Trimmomatic-0.39/trimmomatic-0.39.jar --adapters ../adapters.fasta   --pcr_primers ../primers.fasta -f {}_1.fastq.gz -r {}_2.fastq.gz {}
+
+parallel "iva -t 4 --trimmomatic /home/wchoga/biotools/Trimmomatic-0.39/trimmomatic-0.39.jar --adapters ../adapters.fasta   --pcr_primers ../primers.fasta -f {}_R1.fastq.gz -r {}_R2.fastq.gz {}" ::: $(ls -1 *.gz | rev | cut -c 13- | rev | uniq)
+
+
+ls -1 *.gz | rev | cut -c 13- | rev | uniq > SampleIDs.txt
+
+for i in `cat SampleIDs.txt`; do mkdir $i; mv ${i}*gz ${i}/; done
+for i in `cat SampleIDs.txt`; do 
+
+parallel 'mkdir {} && mv {}*gz {}/' ::: $(cat SampleIDs.txt)
+
+
+# Run iva in each folder
+
+for i in `cat SampleIDs.txt`;
+do (cd $i && iva -t 4 --trimmomatic /home/wchoga/biotools/Trimmomatic-0.39/trimmomatic-0.39.jar --adapters ../../adapters.fasta   --pcr_primers ../../primers.fasta -f ${i}_R1.fastq.gz -r ${i}_R2.fastq.gz ${i} && cd ..);
+done
+
+cd 21692_C_10 && iva -t 4 --trimmomatic /home/wchoga/biotools/Trimmomatic-0.39/trimmomatic-0.39.jar --adapters ../../adapters.fasta   --pcr_primers ../../primers.fasta -f 21692_C_10_R1.fastq.gz -r 21692_C_10_R2.fastq.gz 21692_C_10 && cd ..
+ulimit -n 8192
+parallel 'cd {} && iva -t 12 --trimmomatic /home/wchoga/biotools/Trimmomatic-0.39/trimmomatic-0.39.jar --adapters ../../adapters.fasta   --pcr_primers ../../primers.fasta -f {}_R1.fastq.gz -r {}_R2.fastq.gz {} && cd ..' ::: $(cat SampleIDs.txt)
+
+## Check if done:
+for i in `cat SampleIDs.txt`; do if [ -e "$i/$i/contigs.fasta"  ]; then echo "cut exists in $i" done/; else echo "No cut in $i"; fi; done
+
+## move to done folder
+for i in `cat SampleIDs.txt`; do if [ -e "$i/$i/contigs.fasta"  ]; then echo "cut exists in $i" done/; mv $i done/; else echo "No cut in $i"; fi; done
+
+## remove dead run results
+for i in `cat SampleIDs.txt`; do rm -rf ${i}/${i}; done
+
+# Error below should not affect the run - https://github.com/google/deepconsensus/issues/28
+[E::idx_find_and_load] Could not retrieve index file for 'iteration.1.1.1.map.bam'
+[E::idx_find_and_load] Could not retrieve index file for 'iteration.1.1.2.map.bam'
+[E::idx_find_and_load] Could not retrieve index file for 'iteration.1.1.3.map.bam'
+
+#https://stackoverflow.com/questions/29927005/how-to-check-if-a-files-exists-in-a-specific-directory-in-a-bash-script
+
+ls -1d */ #list only directories
+
+ls -1d */ | sed s#/## > result_dirs.txt 
+
+FILE=contigs.fasta
+if [ -e $FILE $i ]; then
+      echo "File exists"
+else
+      echo "File does not exist"
+fi
+
+
+for i in `cat result_dirs.txt`; do
+if [ -e $i$FILE  ]; then
+      echo "File exists"
+else
+      echo "File does not exist"
+fi
+done
+
+## one line;
+for i in `cat result_dirs.txt`; do if [ -e "$i/contigs.fasta"  ]; then echo "$i is done"; else  echo "$i is not done"; fi; done
+
+## move back the files that were not completely processed.
+
+for i in `cat done.txt` 
+	do 
+		if [ -e $i/contigs.fasta  ] 
+		then 
+			continue; 
+		else  
+			mv ${i}*.gz ../; 
+		fi
+	done
+	
+
+for i in `cat remove.txt`; do rm -rf ${i}; done # remove those files.
+
+for i in `cat result_dirs.txt`; do if [ -e "$i/contigs.fasta"  ]; then mv $i* done/; else rm -Rf $i; fi; done
+
+for i in `cat SampleIDs.txt`; do if [ -e "$i/$i/contigs.fasta"  ]; then echo "contigs exists in $i" done/; else echo "No contigs in $i"; fi; done
+for i in `cat SampleIDs.txt`; do  if [ -e "$i/$i/contigs.fasta"  ]; then  mv ${i} done/;  else  continue; fi; done
+
+for i in `cat SampleIDs.txt`; do if [ -e "${i}/${i}_raw_wRefs.fasta"  ]; then echo "raw exists in ${i}" done/; else echo "No raw in ${i}"; fi; done
+
+makeblastdb -in ../../HIV1_RIP_2020_genome_DNA.aln.fasta -dbtype nucl -out blastDB/RIP2020 -hash_index
+
+../../shiver/shiver_init.sh ShiverInitDir ../../shiver/config.sh ../../HIV1_RIP_2020_genome_DNA.aln.fasta ../../adapters.fasta ../../primers.fasta
+
+
+ls -1d */ | sed s#/## > done.txt  ##trim non-results dirs
+
+# /mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/shiver  #shiver home
+
+cd 21692_C_10 && /mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/shiver/shiver_align_contigs.sh \
+/mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/ShiverInitDir \
+ /mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/shiver/config.sh 21692_C_10/contigs.fasta 21692_C_10 && cd ..
+
+cd 06617BNWNU02013602_PanBCPP2-E1A1L1P1S1C1R1 && /mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/shiver/shiver_align_contigs.sh \
+/mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/ShiverInitDir \
+ /mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/shiver/config.sh 06617BNWNU02013602_PanBCPP2-E1A1L1P1S1C1R1/contigs.fasta \
+ 06617BNWNU02013602_PanBCPP2-E1A1L1P1S1C1R1 && cd ..
+ 
+ cd 21692_C_117 && /mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/shiver/shiver_align_contigs.sh \
+/mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/ShiverInitDir \
+ /mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/shiver/config.sh 21692_C_117/contigs.fasta \
+ 21692_C_117 && cd ..
+ 
+  cd 21692_C_141 && /mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/shiver/shiver_align_contigs.sh \
+/mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/ShiverInitDir \
+ /mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/shiver/config.sh 21692_C_141/contigs.fasta \
+ 21692_C_141 && cd ..
+ 
+  cd 21692_C_145 && /mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/shiver/shiver_align_contigs.sh \
+/mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/ShiverInitDir \
+ /mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/shiver/config.sh 21692_C_145/contigs.fasta \
+ 21692_C_145 && cd ..
+ 
+   cd 06639ZT9E302013603_PanBCPP1-E1A1L1P1S1C1R1 && /mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/shiver/shiver_align_contigs.sh \
+/mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/ShiverInitDir \
+ /mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/shiver/config.sh 06639ZT9E302013603_PanBCPP1-E1A1L1P1S1C1R1/contigs.fasta \
+ 06639ZT9E302013603_PanBCPP1-E1A1L1P1S1C1R1 && cd ..
+
+
+  cd 21692_C_179 && /mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/shiver/shiver_align_contigs.sh \
+/mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/ShiverInitDir \
+ /mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/shiver/config.sh 21692_C_179/contigs.fasta \
+ 21692_C_179 && cd ..
+ 
+#define paths:
+shiverPath=/mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/shiver
+shiverInitDir=/mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/ShiverInitDir
+
+cd 06658GRZ4802013604_PanVuk14-E1A1L1P1S1C1R1 && /mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/shiver/shiver_align_contigs.sh \
+ /mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/ShiverInitDir \
+ /mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/shiver/config.sh \
+ 06658GRZ4802013604_PanVuk14-E1A1L1P1S1C1R1/contigs.fasta \
+ 06658GRZ4802013604_PanVuk14-E1A1L1P1S1C1R1 && cd ..
+ 
+ for s in `cat SampleIDs.txt`
+ do
+ 	cd $s && /mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/shiver/shiver_align_contigs.sh /mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/ShiverInitDir /mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/shiver/config.sh ${s}/contigs.fasta $s && cd ..
+ done
+ 
+ for s in `cat SampleIDs.txt`;  do  (cd $s && /mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/shiver/shiver_align_contigs.sh /mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/ShiverInitDir /mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/shiver/config.sh ${s}/contigs.fasta $s && cd ..);  done
+ 
+ ## use
+ parallel 'cd {1}/{1} && {2}/shiver_align_contigs.sh  {3} {2}/config.sh contigs.fasta {1} && cd ../..' ::: `cat SampleIDs.txt` ::: /mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/shiver ::: /mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/ShiverInitDir
+ 
+ No HIV contigs to analyse for PG15-BW001466-17907_3_61. Quitting.
+ 
+ 
+# Problem aligning temp_HIVcontigs_uncut1.fasta using mafft.
+# Problem aligning the raw contigs to refs. Quitting.
+ 
+ AlignContigsToRefs mafft --quiet temp_HIVcontigs_uncut1.fasta /mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/ShiverInitDir/ExistingRefAlignment.fasta 21692_C_179_raw_wRefs.fasta true false
+ 
+ mafft $AlignerOptions --add "$ContigFile" "$ThisRefAlignment" > \
+    "$TempContigAlignment1"
+    
+### parallel not executing in sub-directory
+parallel "cd {} && ../../shiver/shiver_align_contigs.sh ShiverInitDir ../../shiver/config.sh {}/contigs.fasta {} && cd .." ::: $(cat done.txt)
+
+
+for i in `cat done.txt`;
+do (cd $i && ../../../shiver/shiver_align_contigs.sh ../ShiverInitDir ../../../shiver/config.sh contigs.fasta $i && cd ..);
+done
+
+
+parallel "../../shiver/shiver_map_reads.sh ShiverInitDir ../../shiver/config.sh {}/contigs.fasta {} {}.blast {}_cut_wRefs.fasta {}_R1.fastq.gz {}_R2.fastq.gz" ::: $(cat done.txt)
+
+(cd PG15-BW000948-17526_3_4 && ../../../shiver/shiver_map_reads.sh ../ShiverInitDir ../../../shiver/config.sh contigs.fasta PG15-BW000948-17526_3_4 ../PG15-BW000948-17526_3_4.blast ../PG15-BW000948-17526_3_4_cut_wRefs.fasta ../PG15-BW000948-17526_3_4_R1.fastq.gz ../PG15-BW000948-17526_3_4_R2.fastq.gz && cd ..)
+(../../shiver/shiver_map_reads.sh ShiverInitDir ../../shiver/config.sh  LIB036252_GEN00128402_S/contigs.fasta PG15-BW000948-17526_3_4 LIB036252_GEN00128402_S.blast  LIB036252_GEN00128402_S_cut_wRefs.fasta  LIB036252_GEN00128402_S_R1.fastq.gz  LIB036252_GEN00128402_S_R2.fastq.gz)
+
+# conda install -c hivmmer fastaq
+
+bzip2 -d filename.bz2
+
+cd 06658GRZ4802013604_PanVuk14-E1A1L1P1S1C1R1 && \
+/mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/shiver/shiver_map_reads.sh /mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/ShiverInitDir \
+/mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/shiver/config.sh 06658GRZ4802013604_PanVuk14-E1A1L1P1S1C1R1/contigs.fasta \
+06658GRZ4802013604_PanVuk14-E1A1L1P1S1C1R1 06658GRZ4802013604_PanVuk14-E1A1L1P1S1C1R1.blast \
+06658GRZ4802013604_PanVuk14-E1A1L1P1S1C1R1_cut_wRefs.fasta 06658GRZ4802013604_PanVuk14-E1A1L1P1S1C1R1_R1.fastq.gz 06658GRZ4802013604_PanVuk14-E1A1L1P1S1C1R1_R2.fastq.gz && cd ..
+
+## use
+parallel '(cd {} && /mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/shiver/shiver_map_reads.sh /mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/ShiverInitDir /mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/shiver/config.sh {}/contigs.fasta {} {}/{}.blast {}/{}_cut_wRefs.fasta {}_R1.fastq.gz {}_R2.fastq.gz && cd ..)' ::: $(cat SampleIDs.txt)
+
+for s in `cat SampleIDs.txt`;
+do (cd $s && /mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/shiver/shiver_map_reads.sh /mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/ShiverInitDir /mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/shiver/config.sh ${s}/contigs.fasta $s ${s}.blast ${s}_cut_wRefs.fasta ${s}_R1.fastq.gz ${s}_R2.fastq.gz && cd ..);
+done
+
+pip2 install  numpy biopython==1.76
+
+pip2 install bottleneck>=1.0.0 pandas>=0.22.0 pysnptools>=0.3.9 scipy>=1.0.1 statsmodels>=0.8.0
+pip2 install pandas scipy statsmodels
+
+
+(cd LIB025691_GEN00084514_S112_L002 && ../../../shiver/shiver_align_contigs.sh ../ShiverInitDir ../../../shiver/config.sh contigs.fasta LIB025691_GEN00084514_S112_L002 && cd ..)
+(cd 21760_C_38 && ../../../shiver/shiver_map_reads.sh ../ShiverInitDir ../../../shiver/config.sh contigs.fasta 21760_C_38 ../21760_C_38.blast ../21760_C_38_raw_wRefs.fasta ../21760_C_38_R1.fastq.gz ../21760_C_38_R2.fastq.gz && cd ..)
+
+AlignContigsToRefs mafft --quiet temp_HIVcontigs_uncut1.fasta /mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/ShiverInitDir/ExistingRefAlignment.fasta 06658GRZ4802013604_PanVuk14-E1A1L1P1S1C1R1_raw_wRefs.fasta true false
+mafft --quiet --add temp_HIVcontigs_uncut1.fasta /mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/ShiverInitDir/ExistingRefAlignment.fasta > temp_HIVcontigs_wRefs_MafftAdd.fasta
+
+
+
+Error: found at least one read in _R1.fastq whose name does not end in '/1', which is required for forward reads. One particular problem I've seen in reads found online was that the sequence ID lines look like this
+
+# https://github.com/raymondkiu/fqtk
+/mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/fqtk
+
+bash /mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/fqtk/src/fqtk.sh -a 06658GRZ4802013604_PanVuk14-E1A1L1P1S1C1R1_R1.fastq /1 > 06658GRZ4802013604_PanVuk14-E1A1L1P1S1C1R1_RN2_R1.fastq
+
+awk '{if (NR%4 == 1) {print $1 "_" $2 "/1"} else print}' 06658GRZ4802013604_PanVuk14-E1A1L1P1S1C1R1_R1.fastq > 06658GRZ4802013604_PanVuk14-E1A1L1P1S1C1R1_RN_R1.fastq
+
+
+for i in `cat SampleIDs.txt`; do if [ -e "${i}/${i}.bam"  ]; then echo "bam exists in ${i}" done/; else echo "No bam in ${i}"; fi; done
+
+## Process resistants.
+
+parallel "cd {} && iva -t 4 --trimmomatic /home/wchoga/biotools/Trimmomatic-0.39/trimmomatic-0.39.jar --adapters ../../../adapters.fasta   --pcr_primers ../../../primers.fasta -f {}_R1.fastq.gz -r {}_R2.fastq.gz {} &&.." ::: $(cat SampleIDs.txt)
+../
+
+awk '{if (NR%4 == 1) {print $1 "_" $2 "/1"} else print}' 066423F9HY02013605_PanBCPP1-E1A1L1P1S1C1R1_R1.fastq > 066423F9HY02013605_PanBCPP1-E1A1L1P1S1C1R1_RN_R1.fastq
+awk '{if (NR%4 == 1) {print $1 "_" $2 "/2"} else print}' 066423F9HY02013605_PanBCPP1-E1A1L1P1S1C1R1_R2.fastq > 066423F9HY02013605_PanBCPP1-E1A1L1P1S1C1R1_RN_R2.fastq
+
+awk '{if (NR%4 == 1) {print $1 "_" $2 "/1"} else print}' 06645U7ZMH02013602_PanBCPP4-E1A1L1P1S1C1R1_R1.fastq > 06645U7ZMH02013602_PanBCPP4-E1A1L1P1S1C1R1_RN_R1.fastq
+awk '{if (NR%4 == 1) {print $1 "_" $2 "/2"} else print}' 06645U7ZMH02013602_PanBCPP4-E1A1L1P1S1C1R1_R2.fastq > 06645U7ZMH02013602_PanBCPP4-E1A1L1P1S1C1R1_RN_R2.fastq
+
+awk '{if (NR%4 == 1) {print $1 "_" $2 "/1"} else print}' 066494FANN02013603_PanBCPP5-E1A1L1P1S1C1R1_R1.fastq > 066494FANN02013603_PanBCPP5-E1A1L1P1S1C1R1_RN_R1.fastq
+awk '{if (NR%4 == 1) {print $1 "_" $2 "/2"} else print}' 066494FANN02013603_PanBCPP5-E1A1L1P1S1C1R1_R2.fastq > 066494FANN02013603_PanBCPP5-E1A1L1P1S1C1R1_RN_R2.fastq
+
+awk '{if (NR%4 == 1) {print $1 "_" $2 "/1"} else print}' LIB025660_GEN00084437_S35_L001_R1.fastq > LIB025660_GEN00084437_S35_L001_RN_R1.fastq
+awk '{if (NR%4 == 1) {print $1 "_" $2 "/2"} else print}' LIB025660_GEN00084437_S35_L001_R2.fastq > LIB025660_GEN00084437_S35_L001_RN_R2.fastq
+
+
+/mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/shiver/shiver_map_reads.sh /mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/ShiverInitDir \
+/mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/shiver/config.sh 066494FANN02013603_PanBCPP5-E1A1L1P1S1C1R1/contigs.fasta \
+066494FANN02013603_PanBCPP5-E1A1L1P1S1C1R1 066494FANN02013603_PanBCPP5-E1A1L1P1S1C1R1.blast \
+066494FANN02013603_PanBCPP5-E1A1L1P1S1C1R1_cut_wRefs.fasta 066494FANN02013603_PanBCPP5-E1A1L1P1S1C1R1_RN_R1.fastq 066494FANN02013603_PanBCPP5-E1A1L1P1S1C1R1_RN_R2.fastq
+
+## Sampleset1_1
+for i in `cat SampleIDs.txt`; do if [ -e "${i}/${i}.bam"  ]; then echo "bam exists in ${i}"; mv ${i} done/; else echo "No bam in ${i}"; fi; done
+
+for s in `cat SampleIDs.txt`; do awk '{if (NR%4 == 1) {print $1 "_" $2 "/1"} else print}' ${s}/${s}_R1.fastq > ${s}/${s}_RN_R1.fastq; awk '{if (NR%4 == 1) {print $1 "_" $2 "/2"} else print}' ${s}/${s}_R2.fastq > ${s}/${s}_RN_R2.fastq; done
+for s in `ls *_R1.fastq | rev | cut -c 10- | rev`; do awk '{if (NR%4 == 1) {print $1 "_" $2 "/1"} else print}' ${s}_R1.fastq > ${s}_RN_R1.fastq; awk '{if (NR%4 == 1) {print $1 "_" $2 "/2"} else print}' ${s}_R2.fastq > ${s}_RN_R2.fastq; done
+
+for s in `ls *_R1.fastq | rev | cut -c 10- | rev`; do awk '{if (NR%4 == 1) {print $1 "_" $2 "/1"} else print}' ${s}_R1.fastq > ${s}_RN_R1.fastq; awk '{if (NR%4 == 1) {print $1 "_" $2 "/2"} else print}' ${s}_R2.fastq > ${s}_RN_R2.fastq; done
+
+for i in `cat SampleIDs.txt`; do /mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/shiver/shiver_map_reads.sh /mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/ShiverInitDir \
+/mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/shiver/config.sh ${s}/contigs.fasta \
+${s}/${s} ${s}/${s}.blast \
+${s}/${s}_cut_wRefs.fasta ${s}/${s}_RN_R1.fastq ${s}/${s}_RN_R2.fastq; done
+
+parallel '(cd {} && /mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/shiver/shiver_map_reads.sh /mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/ShiverInitDir /mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/shiver/config.sh {}/contigs.fasta {} {}.blast {}_cut_wRefs.fasta {}_RN_R1.fastq {}_RN_R2.fastq) && cd ..' ::: $(cat SampleIDs.txt)
+
+
+### Phyloscanner
+
+for i in `cat SampleIDs.txt`; do
+  RefFile=${i}_ref.fasta
+  echo "${i}.bam",$RefFile,${i}
+done > bamIDs.txt
+
+## To make some within- & between-host phylogenies, run the following command:
+
+../phyloscanner/phyloscanner_make_trees.py bamIDs.txt --auto-window-params 300,-700,1000,8300 --alignment-of-other-refs ../phyloscanner/InfoAndInputs/2refs_HXB2_C.BW.fasta --pairwise-align-to B.FR.83.HXB2_LAI_IIIB_BRU.K03455 
+
+for i in ExampleInputData/*.bam; do
+  RefFile=${i%.bam}_ref.fasta
+  ID=$(basename "${i%.bam}")
+  echo $i,$RefFile,$ID
+done > InputFileList.csv
+
+conda activate shiver2
+python2 phyloscanner_make_trees.py InputFileList.csv --auto-window-params 300,-700,1000,8300 --alignment-of-other-refs InfoAndInputs/2refs_HXB2_C.BW.fasta --pairwise-align-to B.FR.83.HXB2_LAI_IIIB_BRU.K03455
+
+mamba install -c conda-forge r-readr r-scales r-sna r-ggplot2  r-network r-argparse
+
+Rscript phyloscanner_analyse_trees.R RAxMLfiles/RAxML_bestTree. MyOutput s,12.5 --outgroupName C.BW.00.00BW07621.AF443088 --multifurcationThreshold g
+
+---
+
+- resistance mutations
+- Within host population structure - what bottleneck
+- Ancestral state reconstruction...where and when at which point are the drm mutations appearing?
+Deep seq gwas
+
+Dates:
+
+* - Ids to Steve
+* - Lythgoe Group meeting on Monday
+* - Malaria vaccine development - Monday
+* 40 min talk on Thursday
+
+####
+ /mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/shiver/shiver_map_reads.sh /mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/ShiverInitDir /mnt/lustre/groups/CBBI0818/WONDERFUL/BHP/HIV_BCPP/shiver/config.sh LIB025660_GEN00084437_S35_L001/contigs.fasta LIB025660_GEN00084437_S35_L001 LIB025660_GEN00084437_S35_L001.blast LIB025660_GEN00084437_S35_L001_cut_wRefs.fasta LIB025660_GEN00084437_S35_L001_RN_R1.fastq LIB025660_GEN00084437_S35_L001_RN_R2.fastq
+ 
+ 
+### res phyloscanner
+for i in bam/*.bam; do
+  RefFile=${i%.bam}_ref.fasta
+  ID=$(basename "${i%.bam}")
+  echo $i,$RefFile,$ID
+done > InputFileList.csv 
+
+## To make some within- & between-host phylogenies, run the following command:
+/Applications/biotools/phyloscanner/phyloscanner_make_trees.py InputFileList.csv --auto-window-params 300,-700,1000,8300 --alignment-of-other-refs /Applications/biotools/phyloscanner/InfoAndInputs/2refs_HXB2_C.BW.fasta --pairwise-align-to B.FR.83.HXB2_LAI_IIIB_BRU.K03455 
+ 
+/Applications/biotools/phyloscanner/phyloscanner_make_trees.py InputFileList.csv --auto-window-params 790-2284,2285-5093,6225-8792 --alignment-of-other-refs /Applications/biotools/phyloscanner/InfoAndInputs/2refs_HXB2_C.BW.fasta --pairwise-align-to B.FR.83.HXB2_LAI_IIIB_BRU.K03455 
+/Applications/biotools/phyloscanner/phyloscanner_make_trees.py InputFileList.csv --auto-window-params 300,-700,1000,8300 --alignment-of-other-refs /Applications/biotools/phyloscanner/InfoAndInputs/2refs_HXB2_C.BW.fasta --pairwise-align-to B.FR.83.HXB2_LAI_IIIB_BRU.K03455 
+
+ if [[ ! -f "$bam" ]]; then
+ echo "$bam does not exist" >&2
+ elif [[ ! -f "$ref" ]]; then
+ echo "$ref does not exist" >&2
+ fi
+ 
+ Primary cohort - 42, 24 to 30 time points
+ - Sero-converters
+ - 1st month
+ - 2nd month
+ - gag, pol and env - gag best predictor
+ 
+ BCCP  - crossectional
+ Some participants followed up for more than 1 time point

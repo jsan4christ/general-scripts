@@ -512,7 +512,8 @@ python gdp.py -c config/config.yaml --threads 1 --upload-only upload-files  /ana
 python gdp.py -c config/config.yaml --upload-only upload-files  /analyses2/houriiyah/nCoV_genomes/minion_96_protocol/run485/temp/*.fastq.gz
 python gdp.py -c ./config/config_bact.yaml upload-files --threads 1 --upload-only  /analyses2/data/Cholera/temp/*.fastq.gz
 
-python gdp.py -c config/config.yaml --threads 1 --upload-only upload-files  /analyses2/houriiyah/HPV/KRISP0255_20230719/temp/*.fastq.gz
+python gdp.py -c config/config.yaml --threads 4 --upload-only upload-files  /analyses2/houriiyah/Influenza/KRISP_Influenza_14122023/temp/*.fastq.gz
+
 
 
 cp /mnt/isilon/abbott/abbott_meta_b04_170123/K052005*.gz ../../CERI/abbott_meta_b05_190123/
@@ -584,6 +585,7 @@ hyphy gard --alignment recombination_seqs_uniq.fasta --model GTR
 https://www.medrxiv.org/content/10.1101/2021.08.21.21262393v2
 
 for i in `cat SampleIDs.txt`;  do  on=$(echo $i | cut -d "," -f1); nn=$(echo $i | cut -d "," -f2);  mv "${on}.fastq.gz" "${nn}_ONT.fastq.gz";  done
+for i in `cat SampleIDs.txt`;  do  on=$(echo $i | cut -d "," -f1); nn=$(echo $i | cut -d "," -f2);  mv "${on}.fastq.gz" "${nn}.fastq.gz";  done
 
 
 /Applications/biotools/CodonCounter/bam_nuc_codon_count.py --help
@@ -597,6 +599,9 @@ for i in `cat SampleIDs.txt`;  do  on=$(echo $i | cut -d "," -f1); nn=$(echo $i 
 parallel '/Applications/biotools/CodonCounter_v1.0/CodonCounterx.py --output_type codon -bam {}_fixed_sorted.bam -ref ~/temp/Collaborations/covid/ref/NC_045512.2.fasta -gff ~/temp/Collaborations/covid/ref/genemap_anmol.gff -coor_range 21563-25384 -o  {}_codonFreqsOut.csv' ::: $(ls *_fixed_sorted.bam | cut -d "_" -f1)
 parallel '/Applications/biotools/CodonCounter_v1.0/CodonCounterx.py --output_type codon -bam {}_fixed_sorted.bam -ref ~/temp/Collaborations/covid/ref/NC_045512.2.fasta -gff ~/temp/Collaborations/covid/ref/genemap_anmol.gff -coor_range 266-13468 -o  {}_ORF1a_codonFreqsOut.csv' ::: $(ls *_fixed_sorted.bam | cut -d "_" -f1)
 parallel '/Applications/biotools/CodonCounter_v1.0/CodonCounterx.py --output_type nuc -bam {}_fixed_sorted.bam -ref ~/temp/Collaborations/covid/ref/NC_045512.2.fasta -gff ~/temp/Collaborations/covid/ref/genemap_anmol.gff -coor_range 266-13468 -o  {}_ORF1a_nucFreqsOut.csv' ::: $(ls *_fixed_sorted.bam | cut -d "_" -f1)
+
+parallel -j 25 '/Applications/biotools/CodonCounter_v1.0/CodonCounterx.py --output_type nuc -bam {1}_fixed_sorted.bam -ref ~/temp/Collaborations/covid/ref/NC_045512.2.fasta -gff {2} -coor_range 266-13468 -o  {1}_ORF1a_nucFreqsOut.csv' ::: $(ls *_fixed_sorted.bam | cut -d "_" -f1) ::: ~/temp/Collaborations/covid/ref/genemap_anmol.gff
+
 
 #https://mgymrek.github.io/pybamview/usage.html
 pybamview --bam N47297-2_fixed_sorted.bam --ref ~/temp/Collaborations/covid/ref/NC_045512.2.fasta
@@ -900,3 +905,86 @@ ufsngsworkshop2023@gmail.com
 
 
 ls -1 *.bam | rev | cut -c5- | rev
+
+
+virulign /Applications/biotools/virulign/references/HIV/HIV-HXB2-gag.xml  --exportAlphabet AminoAcids  cluster85wRefs_uniq_aln.fasta13.rdp5.gag_rrr.fas > cluster85wRefs_uniq_aln.fasta13.rdp5.gag_aa_rrr.fas 2> cluster85wRefs_uniq_aln.fasta13.rdp5.gag_aa_rrr.fas.err
+
+virulign /Applications/biotools/virulign/references/HIV/HIV-HXB2-gag.xml cluster85wRefs_uniq_aln.fasta13.rdp5.gag_rrr.fas --exportKind GlobalAlignment  --exportAlphabet AminoAcids   > cluster85wRefs_uniq_aln.fasta13.rdp5.gag_aa_rrr.fas 2> cluster85wRefs_uniq_aln.fasta13.rdp5.gag_aa_rrr.fas.err
+
+Nucleotides
+
+sed '/^>/! s/\^//g' <seq2.fa >seq3.fa
+
+# This triggers the substitution command s/\^//g (which I believe you tried to use but got the order of the slashes slightly wrong) on any line that does not start with a > character. The substitution removes any ^ character on the line by repeatedly replacing it with nothing until no such character is left.
+# The ^ needs to be escaped since it otherwise would act as an anchor, anchoring the regular expression to the start of the line.
+
+#remove-line-breaks-in-a-fasta-file
+seqkit seq -w 0 input.fasta > output.fasta # works for multifaster
+
+
+seqtk seq -l 0 test_unwrap_in.fa > test_unwrap_out.fa # works for one sequence
+
+##### Seq alignment trimming
+##### http://trimal.cgenomics.org/getting_started_with_trimal_v1.2
+##### https://web.natur.cuni.cz/~vlada/moltax/part2.html
+trimal -in cluster85_13_aln_rrr_nc.rdp5.fas -out cluster85_13_aln_rrr_nc.rdp5.trimal.fas -htmlout cluster85_13_aln_rrr_nc.rdp5.fas.trimal.html -gt 0.8 -st 0.001 -cons 60
+trimal -in INFILE -out OUTFILE -fasta -automated1
+trimal -in INFILE -out OUTFILE -fasta -gt 0.7
+trimal -in INFILE -out OUTFILE -fasta -gappyout
+Automated1 is a heuristic method, -gt removes sites with >30% gaps, -gappyout automatically computes a trimming score based on gap distribution.
+
+column -s, -t < data/metadata.tsv  | less -#2 -N -S
+
+column -s, -t < data/metadata.tsv  | less -#2 -N -S
+
+https://stackoverflow.com/questions/714421/what-is-an-easy-way-to-do-a-sorted-diff-between-two-files
+diff <(sort text2) <(sort text1)
+
+https://www.bioinformatics.org/sms/iupac.html
+
+# hyphy remove-duplicates.bf --msa example.fas [--tree example.nwk] --output uniques.fas ENV="DATA_FILE_PRINT_FORMAT=9"
+# hyphy /Applications/biotools/hyphy-analyses/remove-duplicates/remove-duplicates.bf --msa cluster85_5_env_nr_pruned_sel_flat.fas --tree cluster85wRefs_uniq_aln_nr_pruned6_flat_sel.fasta5.rdp5.rrs.fas.fast.tree --output cluster85_5_env_nr_pruned_sel_flat_uniq.fas ENV="DATA_FILE_PRINT_FORMAT=9" # tree option not recorgnized
+hyphy /Applications/biotools/hyphy-analyses/remove-duplicates/remove-duplicates.bf --msa cluster85_5_env_nr_pruned_sel_flat.fas --output cluster85_5_env_nr_pruned_sel_flat_uniq.fas ENV="DATA_FILE_PRINT_FORMAT=9"
+
+# https://unix.stackexchange.com/questions/60577/concatenate-multiple-files-with-same-header
+head -1 K059437_HCV001_ONT_strain-table.csv > all.txt
+awk 'FNR>1{print}' *strain-table.csv >> all.txt
+
+NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
+
+
+ File "/Users/sanemj/miniconda3/lib/python3.11/site-packages/pandas/io/excel/_base.py", line 1157, in __new__
+    raise ValueError(f"No engine for filetype: '{ext}'") from err
+ValueError: No engine for filetype: 'xls'
+
+Solution:
+
+
+bedtools bamtofastq -i K059357_COVID477-bam_spike.bam -fq K059357_COVID477-bam_spike_R1.fastq -fq2 K059357_COVID477-bam_spike_R2.fastq
+
+
+seqpanther codoncounter -bam bams -rid NC_045512.2 -ref /Users/sanemj/Temp/Bioinformatics/covid/ref/NC_045512.2.fasta -gff /Users/sanemj/Temp/Bioinformatics/covid/ref/genemap_anmol.gff -coor_range 21563-25384
+
+ls -1d */ #list only directories
+
+
+## Repair linux
+xfs_repair -v -L /dev/sdb or dm-0
+
+
+fastq-dump --gzip --skip-technical --readids --read-filter pass --dumpbase --split-3 --clip --outdir path/to/reads/ SRR_ID
+fastq-dump --gzip --skip-technical --readids --dumpbase --split-3 --clip --outdir sra SRR2126754
+
+fastq-dump --gzip --skip-technical --readids --dumpbase --split-3 --clip --outdir sra {}
+
+http://www.ncbi.nlm.nih.gov/nucest?term=KP840625:KP840656[accn]  ##batch retrieve in range
+
+https://stackoverflow.com/questions/44759180/filter-by-multiple-patterns-with-filter-and-str-detect
+search_vec <- c('a','f','o')
+df %>% 
+    filter(str_detect(lttrs, pattern = paste(search_vec, collapse = '|')))
+    
+awk’{ if(NR%4==2)printsubstr($0,1,20); }’input.fastq|sort|uniq-c |awk’{ print$1 }’>counts.txt
+
+# https://apple.stackexchange.com/questions/446859/when-pasting-in-terminal-app-00-is-pasted-at-the-start-and-01-at-the-end
+printf '\e[?2004l'

@@ -537,6 +537,10 @@ seqkit split cluster85.fasta030 -p 2 mv these two into a new directory split_030
  #cat /analyses2/data/Pangea_SJ/LANL_HXB2/K03455.fasta <(echo) /analyses2/data/Pangea_SJ/aga_hiv/aln/clusters/HIV1_RIP_2020_genome_DNA.aln.fasta <(echo) ../cluster85_part_001.fasta030 > cluster85_part_001.fasta030
  #cat /analyses2/data/Pangea_SJ/LANL_HXB2/K03455.fasta <(echo) /analyses2/data/Pangea_SJ/aga_hiv/aln/clusters/HIV1_RIP_2020_genome_DNA.aln.fasta <(echo) ../cluster85.part_002.fasta030 > cluster85_part_002.fasta030
 
+# On the new mac:
+/Users/sanemj/Google Drive/My\ Drive/Pangea/Analysis/refs/K03455.fasta
+/Users/sanemj/Google Drive/My\ Drive/Pangea/Analysis/refs/HIV1_RIP_2020_genome_DNA.aln.fasta
+
 for f in `ls *fasta*`; do
 for i in `cat /analyses2/data/Pangea_SJ/aga_hiv/aln/clusters/rename_refs.txt`;  do  on=$(echo $i | cut -d "," -f1);  nn=$(echo $i | cut -d "," -f2);  /usr/bin/sed -i "s#$on#$nn#g" ${f};  done
 done
@@ -561,7 +565,181 @@ for f in `ls *fasta*`; do
 
 /usr/local/bin/parallel '/analyses/software/miniconda3b/envs/phylogenetics/bin/augur align --sequences cluster85wRefs_uniq.{}  --output msa/cluster85wRefs_uniq_aln.{} --nthreads 24 --method mafft --reference-name "K03455|HIVHXB2CG"   --remove-reference --fill-gaps --debug' ::: $(ls *.fasta*  | xargs -n1 basename | cut -d "." -f2)
 
-seqkit grep -rp "ref_" cluster85wRefs_uniq_aln.fasta14 > cluster85wRefs_uniq_aln.fasta14.a
-seqkit grep -vrp "ref_" cluster85wRefs_uniq_aln.fasta14 > cluster85wRefs_uniq_aln.fasta14.b
-cat cluster85wRefs_uniq_aln.fasta14.a cluster85wRefs_uniq_aln.fasta14.b > cluster85wRefs_uniq_aln_srt.fasta14
-rm cluster85wRefs_uniq_aln.fasta14.a cluster85wRefs_uniq_aln.fasta14.b
+## Put refs at the top of the alignment for easier analysis later in RDP. This is particularly important for generation breakpoint plots.
+seqkit grep -rp "ref_" cluster85wRefs_aln.uniq.fasta03 > cluster85wRefs_aln.uniq.fasta03.a
+seqkit grep -vrp "ref_" cluster85wRefs_aln.uniq.fasta03 > cluster85wRefs_aln.uniq.fasta03.b
+cat cluster85wRefs_aln.uniq.fasta03.a cluster85wRefs_aln.uniq.fasta03.b > cluster85wRefs_aln.uniq_srt.fasta03
+rm cluster85wRefs_aln.uniq.fasta03.a cluster85wRefs_aln.uniq.fasta03.b
+
+#NEXUS
+
+
+#NEXUS
+begin trees;
+	tree tree_1 = [&R] (('Botswana/074-A-106-1-6_w4_333.1789282683.MK458097/':0.844156,'Botswana/074-A-106-1-6_w4_333.1789282683.MK458097/_1089-1216':0.585824)[&label=36]:0.039142,'Botswana/074-A-106-1-6_w4_333.1789282683.MK458097/_1449-4530':0.883298);
+end;
+
+
+### Phylogegenetics
+
+iqtree -s cluster85wRefs_uniq_aln.fasta11.rdp5.rrr_nr.fas -m GTR -b 100 -nt 4
+
+#whole genos
+iqtree2 -s cluster85wRefs_uniq_aln.fasta3.rdp5.nr_rrr.fas -bb 1000 -m GTR -pre cluster85wRefs_uniq_aln.fasta3.rdp5.nr_rrr.fas.uf
+FastTree -nt -gtr -gamma < cluster85wRefs_uniq_aln.fasta3.rdp5.nr_rrr.fas > cluster85wRefs_uniq_aln.fasta3.rdp5.nr_rrr.fast.tree
+
+iqtree2 -s cluster85wRefs_uniq_aln.fasta2.rdp5.nr_rrr.fas  -b 100 -m GTR -pre cluster85wRefs_uniq_aln.fasta2.rdp5.nr_rrr.fas
+iqtree2 -s cluster85wRefs_uniq_aln.fasta3.rdp5.nr_rrr.fas  -b 100 -m GTR -pre cluster85wRefs_uniq_aln.fasta3.rdp5.nr_rrr.fas
+
+#genes
+iqtree2 -s cluster85wRefs_uniq_aln.fasta3.rdp5.nr_gag_rrr.fas -bb 1000 -m GTR -pre cluster85wRefs_uniq_aln.fasta3.rdp5.nr_gag_rrr.fas.uf
+iqtree2 -s cluster85wRefs_uniq_aln.fasta3.rdp5.nr_pol_rrr.fas -bb 1000 -m GTR -pre cluster85wRefs_uniq_aln.fasta3.rdp5.nr_pol_rrr.fas.uf
+
+
+FastTree -nt -gtr -gamma < cluster85wRefs_uniq_aln.fasta3.rdp5.nr_pol_rrr.fas > cluster85wRefs_uniq_aln.fasta3.rdp5.nr_pol_rrr.fast.tree
+
+### prep seqs for hyphy
+hyphy /Applications/biotools/hyphy-analyses/codon-msa/pre-msa.bf --input cluster85wRefs_uniq_aln.fasta3.rdp5.nr_gag_rrr.fas
+
+mafft --nomemsave --thread 2 --auto cluster85wRefs_uniq_aln.fasta3.rdp5.nr_gag_rrr.fas_protein.fas > cluster85wRefs_uniq_aln.fasta3.rdp5.nr_gag_rrr.fas_protein.msa
+
+hyphy /Applications/biotools/hyphy-analyses/codon-msa/post-msa.bf --protein-msa cluster85wRefs_uniq_aln.fasta3.rdp5.nr_gag_rrr.fas_protein.msa --nucleotide-sequences cluster85wRefs_uniq_aln.fasta3.rdp5.nr_gag_rrr.fas_nuc.fas --output cluster85wRefs_uniq_aln.fasta3.rdp5.nr_gag_rrr.fas
+
+### hyph selection
+hyphy fel --alignment cluster85wRefs_uniq_aln.fasta3.rdp5.nr_gag_rrr.fas --tree cluster85wRefs_uniq_aln.fasta3.rdp5.nr_gag_rrr.fas.uf.treefile
+
+http://hyphy.org/tutorials/CL-prompt-tutorial/#:~:text=Preparing%20input%20data%20for%20HyPhy&text=Most%20standard%20alignment%20formats%20are,be%20a%20Newick%2Dformatted%20phylogeny.
+
+#prune outliers from aligment and tree
+seqkit grep -rvf cluster85wRefs_uniq_aln.fasta3.rdp5.nr_pol_rrr_na_drop.txt cluster85wRefs_uniq_aln.fasta3.rdp5.nr_pol_rrr_na.fas > cluster85wRefs_uniq_aln.fasta3.rdp5.nr_pol_rrr_na_nol.fas
+
+/Users/sanemj/Temp/Bioinformatics/general-scripts/phylogenetics/drop_tips_cmd.R ccluster85wRefs_uniq_aln.fasta3.rdp5.nr_pol_rrr_na.fas.uf.treefile cluster85wRefs_uniq_aln.fasta3.rdp5.nr_pol_rrr_na_drop.txt cluster85wRefs_uniq_aln.fasta3.rdp5.nr_pol_rrr_na.fas.uf.pruned.treefile
+
+hyphy fel --alignment cluster85wRefs_uniq_aln.fasta3.rdp5.nr_pol_rrr_na_nol.fas --tree cluster85wRefs_uniq_aln.fasta3.rdp5.nr_pol_rrr_na.fas.uf.pruned.treefile
+
+
+### local combined alignment with HXB2 at the top
+cat /Users/sanemj/Google\ Drive/My\ Drive/Pangea/Analysis/refs/K03455.fasta cluster85wRefs_uniq_aln_nr.fasta0 cluster85wRefs_uniq_aln_nr.fasta1 cluster85wRefs_uniq_aln_nr.fasta2 cluster85wRefs_uniq_aln_nr.fasta3 cluster85wRefs_uniq_aln_nr.fasta4 cluster85wRefs_uniq_aln_nr.fasta5 cluster85wRefs_uniq_aln_nr.fasta6 cluster85wRefs_uniq_aln_nr.fasta7 cluster85wRefs_uniq_aln_nr.fasta8 cluster85wRefs_uniq_aln_nr.fasta9 cluster85wRefs_uniq_aln_nr.fasta10 cluster85wRefs_uniq_aln_nr.fasta11 cluster85wRefs_uniq_aln_nr.fasta12 cluster85wRefs_uniq_aln_nr.fasta13 cluster85wRefs_uniq_aln_nr.fasta14 cluster85wRefs_uniq_aln_nr.fasta15 cluster85wRefs_uniq_aln_nr.fasta16 cluster85wRefs_uniq_aln_nr.fasta17 cluster85wRefs_uniq_aln_nr.fasta18 cluster85wRefs_uniq_aln_nr.fasta19 > cluster85_allseqs_wHXB2_uniq_aln.fasta
+
+grep -c ">"  cluster85_allseqs_wHXB2_uniq_aln.fasta
+
+## Get seqids
+grep ">" cluster85wRefs_uniq_aln_nr.fasta10 | sed "s/>//" | > cluster85wRefs_uniq_aln_nr.fasta10.seq_ids.txt
+
+##### Phylogenetics:
+## Root
+France/B.FR.1983.HXB2-LAI-IIIB-BRU.K03455/1983
+
+cat cluster85wRefs_uniq_aln.fasta0/cluster85_0_aln_rrr_nr.rdp5.fas cluster85wRefs_uniq_aln.fasta1/cluster85_1_aln_rrr_nr.rdp5.fas cluster85wRefs_uniq_aln.fasta2/cluster85_2_aln_rrr_nr.rdp5.fas cluster85wRefs_uniq_aln.fasta3/cluster85_3_aln_rrr_nr.rdp5.fas cluster85wRefs_uniq_aln.fasta5/cluster85_5_aln_rrr_nr.rdp5.fas cluster85wRefs_uniq_aln.fasta7/cluster85_7_aln_rrr_nr.rdp5.fas cluster85wRefs_uniq_aln.fasta12/cluster85_12_aln_rrr_nr.rdp5.fas cluster85wRefs_uniq_aln.fasta13/cluster85_13_aln_rrr_nr.rdp5.fas cluster85wRefs_uniq_aln.fasta14/cluster85_14_aln_rrr_nr.rdp5.fas cluster85wRefs_uniq_aln.fasta17/cluster85_17_aln_rrr_nr.rdp5.fas K03455.fasta > cluster85_combined_aln_rrr_nr.rdp5.fas
+FastTree -nt -gtr -gamma cluster85_combined_subset_aln_rrr_nr.rdp5.fas > cluster85_combined_subset_aln_rrr_nr.rdp5.fas.fast.tree
+
+# sample 50 instead of 100. The -i simply ignores case
+seqkit grep -rif cluster_subset_tip_ids_50.txt cluster85_combined_aln_rrr_nr.rdp5.fas > cluster85_combined_subset_aln_rrr_nr_s50.rdp5.fas
+FastTree -nt -gtr -gamma cluster85_combined_subset_aln_rrr_nr_s50.rdp5.fas > cluster85_combined_subset_aln_rrr_nr_s50.rdp5.fas.fast.tree
+
+## Tree without the extra long branch
+seqkit grep -nvf extra_long_branch_seq_ids.txt cluster85_combined_subset_aln_rrr_nr_s50.rdp5.fas > cluster85_combined_subset_aln_rrr_nr_s50_stable.rdp5.fas
+FastTree -nt -gtr -gamma cluster85_combined_subset_aln_rrr_nr_s50_stable.rdp5.fas > cluster85_combined_subset_aln_rrr_nr_s50_stable.rdp5.fas.fast.tree
+
+FastTree -nt -gtr -gamma -boot 100 cluster85_combined_subset_aln_rrr_nr_s50_stable.rdp5.fas > cluster85_combined_subset_aln_rrr_nr_s50_stable.rdp5.fas.boot.fast.tree
+
+treetime --aln cluster85_combined_subset_aln_rrr_nr_s50_stable.rdp5.fas --tree cluster85_combined_subset_aln_rrr_nr_s50_stable.rdp5.fas.boot.fast.tree --dates metadata.tsv --clock-rate 0.0008 --reroot oldest --clock-std-dev 0.0004 > log.txt
+
+cluster85_0_aln_rrr_nr_root_neseqs.rdp5.fas #neseqs - 'is no empty sequences'
+
+
+
+//WhatsApp number +256772043790 - Perez//
+
+### Cluster ML trees
+
+## Cluster 0
+FastTree -nt -gtr -gamma -boot 100 cluster85_0_aln_rrr_nr_root_neseqs.rdp5.fas > cluster85_0_aln_rrr_nr_root_neseqs.rdp5.fas.boot.fast.tree
+
+
+## Cluster 1
+FastTree -nt -gtr -gamma -boot 100 cluster85_1_aln_rrr_nr_root_neseqs.rdp5.fas > cluster85_1_aln_rrr_nr_root_neseqs.rdp5.fas.boot.fast.tree
+iqtree2 --boot-trees  -T 12 -s cluster85_1_aln_rrr_nr_root_neseqs.rdp5.fas -bb 1000 -m MFP -pre cluster85_1_aln_rrr_nr_root_neseqs.rdp5.fas.uf
+
+## Cluster 2
+# Done on my laptop in IQT
+
+## Cluster 3 - 
+# Done on my laptop in IQtree
+
+## cluster5
+iqtree2 -s cluster85_5_aln_rrr_nr_root.rdp5.fas -bb 1000 -m GTR -pre cluster85_5_aln_rrr_nr_root.rdp5.fas.uf
+FastTree -nt -gtr -gamma -boot 100 cluster85_5_aln_rrr_nr_root.rdp5.fas > cluster85_5_aln_rrr_nr_root.rdp5.fas.boot.fast.tree
+
+
+## cluster7
+iqtree2 -s cluster85_7_aln_rrr_nr_root.rdp5.fas -bb 1000 -m GTR -pre cluster85_7_aln_rrr_nr_root.rdp5.fas.uf
+FastTree -nt -gtr -gamma -boot 100 cluster85_7_aln_rrr_nr_root.rdp5.fas > cluster85_7_aln_rrr_nr_root.rdp5.fas.boot.fast.tree
+
+
+## Cluster 12
+FastTree -nt -gtr -gamma -boot 100 cluster85_12_aln_rrr_nr_root_neseqs.rdp5.fas > cluster85_12_aln_rrr_nr_root_neseqs.rdp5.fas.boot.fast.tree
+FastTree -nt -gtr -gamma -boot 100 cluster85_12_aln_rrr_nr_root_neseqs_pruned1.rdp5.fas > cluster85_12_aln_rrr_nr_root_neseqs_pruned1.rdp5.fas.boot.fast.tree  ## Two seqs removed
+
+
+## Cluster 13
+FastTree -nt -gtr -gamma -boot 100 cluster85_13_aln_rrr_nr_root_neseqs.rdp5.fas > cluster85_13_aln_rrr_nr_root_neseqs.rdp5.fas.boot.fast.tree
+FastTree -nt -gtr -gamma -boot 100 cluster85_13_aln_rrr_nr_root_neseqs_pruned1.rdp5.fas > cluster85_13_aln_rrr_nr_root_neseqs_pruned1.rdp5.fas.boot.fast.tree
+
+iqtree2  --boot-trees  -T 12 -s cluster85_13_aln_rrr_nr_root_neseqs.rdp5.fas -bb 1000 -m MFP -pre cluster85_13_aln_rrr_nr_root_neseqs.rdp5.fas.uf
+
+## Cluster 14
+iqtree2 -s  cluster85_14_aln_rrr_nr_root.rdp5.fas -bb 1000 -m GTR -pre  cluster85_14_aln_rrr_nr_root.rdp5.fas.uf
+
+
+## Cluster 17
+iqtree2 -s  cluster85_17_aln_rrr_nr_root.rdp5.fas -bb 1000 -m GTR -pre  cluster85_17_aln_rrr_nr_root.rdp5.fas.uf
+
+
+#####
+https://www.census.gov/data-tools/demo/hiv/#/map?s_datacode=R
+
+
+
+####### difff:
+cat /analyses2/data/Pangea_SJ/LANL_HXB2/K03455.fasta <(echo) /analyses2/data/Pangea_SJ/aga_hiv/aln/clusters/HIV1_RIP_2020_genome_DNA.aln.fasta <(echo) ../cluster85.fasta0 > cluster85wRefs.fasta0
+cat /analyses2/data/Pangea_SJ/LANL_HXB2/K03455.fasta <(echo) /analyses2/data/Pangea_SJ/aga_hiv/aln/clusters/HIV1_RIP_2020_genome_DNA.aln.fasta <(echo) ../cluster85.fasta1 > cluster85wRefs.fasta1
+
+for i in `cat /analyses2/data/Pangea_SJ/aga_hiv/aln/clusters/rename_refs.txt`;  do  on=$(echo $i | cut -d "," -f1);  nn=$(echo $i | cut -d "," -f2);  /usr/bin/sed -i "s#$on#$nn#g"  cluster85wRefs.fasta0;  done
+for i in `cat /analyses2/data/Pangea_SJ/aga_hiv/aln/clusters/rename_refs.txt`;  do  on=$(echo $i | cut -d "," -f1);  nn=$(echo $i | cut -d "," -f2);  /usr/bin/sed -i "s#$on#$nn#g"  cluster85wRefs.fasta1;  done
+
+seqkit rmdup --ignore-case cluster85wRefs.fasta0 -o deduped/cluster85wRefs_uniq.fasta0 --dup-seqs-file deduped/dups/cluster85wRefs_dups.fasta0 --dup-num-file deduped/dups/cluster85wRefs_dups.fasta0.txt
+seqkit rmdup --ignore-case cluster85wRefs.fasta1 -o deduped/cluster85wRefs_uniq.fasta1 --dup-seqs-file deduped/dups/cluster85wRefs_dups.fasta1 --dup-num-file deduped/dups/cluster85wRefs_dups.fasta1.txt
+
+
+/analyses/software/miniconda3b/envs/phylogenetics/bin/augur align --sequences cluster85wRefs_uniq.fasta0  --output msa/cluster85wRefs_uniq_uniq_aln.fasta0 --nthreads 24 --method mafft --reference-name "K03455|HIVHXB2CG"   --remove-reference --fill-gaps --debug
+/analyses/software/miniconda3b/envs/phylogenetics/bin/augur align --sequences cluster85wRefs_uniq.fasta1  --output msa/cluster85wRefs_uniq_uniq_aln.fasta1 --nthreads 24 --method mafft --reference-name "K03455|HIVHXB2CG"   --remove-reference --fill-gaps --debug
+
+
+
+seqkit grep -rp "ref_" cluster85wRefs_uniq_aln.fasta13 > cluster85wRefs_uniq_aln.fasta13.a
+seqkit grep -vrp "ref_" cluster85wRefs_uniq_aln.fasta13 > cluster85wRefs_uniq_aln.fasta13.b
+cat cluster85wRefs_uniq_aln.fasta13.a cluster85wRefs_uniq_aln.fasta13.b > cluster85wRefs_aln.uniq_srt.fasta13
+rm cluster85wRefs_uniq_aln.fasta13.a cluster85wRefs_uniq_aln.fasta13.b
+
+
+
+ cluster85wRefs_aln.uniq_srt.fasta0
+ Trim:
+ first 496
+ last 9223-9108
+ 
+cluster85wRefs_aln.uniq_srt.fasta1
+first 447
+last 9285-9177
+
+ATGGGTGCGAGAGCGTCAGTATTAAGAGGCGAAAAATTAGATGAATGGGAAAAAATTAGGCTAAGGCCAGGGGGAAAGAAACGTTATATGCTAAAACACATAATATGGGCAAGCAGGGAGCTGGAAAGATTTGCACTTAACCCTGGCCTTTTGGAGACATCAGAAGGCTGTAAACAGATAATGTCACAGCTACAACCAGCTCTTAAGACAGGAACAGAGGAACTTAAATCATTATACAACACAGTAGCAACTCTCTATTGTGTACATAGAAGGATAAAAGTACAAGACACCAAGGAACTTAGACAAGATAGAGGAAGAACAAAAACAATGAAAAACACAGCAGGCAGCGGCGGTGGAACCAGTCAAAATTAT
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+tn93-cluster -f -o /usr/local/biotools/RASCL/results/B.1.1.7/ORF7a.query.json -t 0.0005 /usr/local/biotools/RASCL/results/B.1.1.7/ORF7a.query.m
+sa.SA
+usage: tn93-cluster [-h] [-o OUTPUT] [-a AMBIGS] [-l OVERLAP] [-t THERSHOLD] [-c CLUSTER-TYPE] [-m OUTPUT_MODE] [-g FRACTION] [-q] [FASTA]
+tn93-cluster: error: unknown argument: -f
+Command exection failed code 256
+Reference seq_name
