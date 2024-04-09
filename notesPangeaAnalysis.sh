@@ -743,3 +743,77 @@ usage: tn93-cluster [-h] [-o OUTPUT] [-a AMBIGS] [-l OVERLAP] [-t THERSHOLD] [-c
 tn93-cluster: error: unknown argument: -f
 Command exection failed code 256
 Reference seq_name
+
+
+
+### Nextstrain:
+rule all:
+    input:
+        auspice_json = "auspice/zika.json",
+
+input_fasta = "data/sequences.fasta",
+input_metadata = "data/metadata.tsv",
+dropped_strains = "config/dropped_strains.txt",
+reference = "config/zika_outgroup.gb",
+colors = "config/colors.tsv",
+lat_longs = "config/lat_longs.tsv",
+auspice_config = "config/auspice_config.json"
+
+
+mv auspice/zika.json auspice/hiv.json
+
+2848 sequences:
+
+augur index \
+  --sequences data/sequences.fasta \
+  --output results/sequence_index.tsv
+  
+augur filter \
+  --sequences data/sequences.fasta \
+  --sequence-index results/sequence_index.tsv \
+  --metadata data/metadata.tsv \
+  --include config/include.txt \
+  --output results/filtered.fasta \
+  --group-by country year month \
+  --sequences-per-group 20 \
+  --min-date 1984
+
+### Try to skip
+augur align \
+  --sequences results/filtered.fasta \
+  --reference-sequence config/K03455.gb \
+  --output results/aligned.fasta \
+  --fill-gaps
+
+## Jump to tree
+augur tree \
+  --alignment results/filtered.fasta \
+  --method fasttree \
+  --output results/tree_raw.nwk
+  
+## FastTreeDblMP -nt -nosupport results/filtered.fasta 1> results/tree_raw.nwk 2> results/tree_raw.nwk.log
+  
+augur refine \
+  --tree results/tree_raw.nwk \
+  --alignment results/aligned.fasta \
+  --metadata data/metadata.tsv \
+  --output-tree results/tree.nwk \
+  --output-node-data results/branch_lengths.json \
+  --timetree \
+  --coalescent opt \
+  --date-confidence \
+  --date-inference marginal \
+  --clock-filter-iqd 4
+  
+augur traits \
+  --tree results/tree.nwk \
+  --metadata data/metadata.tsv \
+  --output-node-data results/traits.json \
+  --columns region country \
+  --confidence
+  
+augur ancestral \
+  --tree results/tree.nwk \
+  --alignment results/aligned.fasta \
+  --output-node-data results/nt_muts.json \
+  --inference joint

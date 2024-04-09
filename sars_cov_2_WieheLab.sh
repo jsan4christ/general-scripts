@@ -60,3 +60,8 @@ mafft --6merpair --mapout --keeplength --addfragments  sample3_nb.fasta ../WIV04
 # Columns: (i) sequence identifier, (ii) position in the alignment, (iii) character in this sequence, (iv) character in the reference sequence.
 python count_mutations.py sample3_nb_aln.fasta > mutations.txt
 
+# https://stackoverflow.com/questions/39255781/what-is-difference-between-geom-point-and-geom-jitter-in-simple-language-in-r
+
+
+python /datacommons/dhvi/mb488/COVID/spikenuc0213/.count_X.py RBD_extractor_output.fasta X > /datacommons/dhvi/mb488/COVID/spikenuc0213/x_count.txt
+python /datacommons/dhvi/mb488/COVID/spikenuc0213/.count_X.py RBD_extractor_output.fasta - > /datacommons/dhvi/mb488/COVID/spikenuc0213/dash_count.txt

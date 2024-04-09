@@ -988,3 +988,18 @@ awk’{ if(NR%4==2)printsubstr($0,1,20); }’input.fastq|sort|uniq-c |awk’{ pr
 
 # https://apple.stackexchange.com/questions/446859/when-pasting-in-terminal-app-00-is-pasted-at-the-start-and-01-at-the-end
 printf '\e[?2004l'
+
+https://www.biostars.org/p/9537536/
+seqkit rename test.fq
+rename.sh in=<file> in2=<file2> out=<outfile> out2=<outfile2> addpairnum=t  ## bbmap
+https://github.com/shenwei356/seqkit/issues/94
+
+https://github.com/shenwei356/seqkit/issues/94
+seqkit locate -f <(seqkit rename pattern.fasta | seqkit seq -i ) <(printf '>Aseq\nATTAT\n') -i \
+    | csvtk pretty -t
+
+https://hpc.nih.gov/apps/seqkit.html
+duplicate       duplicate sequences N times
+
+ cat tests/hairpin.fa | seqkit head -n 1 \
+    | seqkit duplicate -n 2 | seqkit rename

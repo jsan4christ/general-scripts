@@ -1,0 +1,12 @@
+#!/bin/bash
+#SBATCH --job-name=extract_runs
+#SBATCH --ntasks=8
+#SBATCH --error=slurm-%j.err
+#SBATCH --mem=80G
+#SBATCH --partition=dhvi
+#SBATCH --ntasks-per-node=8
+#SBATCH --mail-type=END
+#SBATCH --mail-user=madison.berry@duke.edu
+
+/datacommons/dhvi/KJW/scripts_dev/spike_extractor/spike_extractor -q  WIV04_RBD.fasta -i GISAID_spikes.dedup.fasta -go 11 -ge 1 -matrix /datacommons/dhvi/KJW/scripts_dev/spike_extractor/BLOSUM62.txt > RBD_extractor_output.fasta
+date
