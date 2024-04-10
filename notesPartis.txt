@@ -1,0 +1,137 @@
+WARNING: unable to unmarshal config file /Users/sanemj/.docker/config.json: invalid character ':' after top-level value
+/Users/sanemj/.docker/config.json: json: cannot unmarshal string into Go value of type configfile.ConfigFile
+
+
+
+		"auths": {},
+		"detachKeys": "ctrl-q,q"
+        "credsStore": "desktop",
+        "currentContext": "desktop-linux"
+
+
+PARTIS_DOCKER_HOME=~/Temp/Bioinformatics/BNABs/partis_docker_home/
+
+docker run -it --name container-1 -v ~/Temp/Bioinformatics/BNABs/partis_docker_home:/host/partis/home quay.io/matsengrp/partis /bin/bash
+
+bin/partis annotate --infname /host/partis/home/fastafiles/HeavyChain.CH235.clone.wUCA.noIntermediates.fasta --outfname /host/partis/home/fastafiles/output/CH235/HeavyChain.CH235.yaml --extra-annotation-columns cdr3_seqs:lengths:regional_bounds
+## Remove this container when done so that you can launch it again.
+docker rm  container-1
+
+docker stop  container-1
+
+
+python /host/partis/home/scripts/partis_CDR3_rf.py 
+
+python /host/partis/home/scripts/partis_to_RS_IMGT_hashed_forJames.py
+
+
+
+bin/partis annotate --infname /host/partis/home/fastafiles/HeavyChain.CH235.clone.wUCA.noIntermediates.fasta --outfname /host/partis/home/fastafiles/sample_yamls/HeavyChain.CH235.yaml --extra-annotation-columns cdr3_seqs:lengths:regional_bounds
+
+ion gt
+
+markup string
+
+# strat the container if present but not running
+docker start container-1
+
+# Get into the container
+docker exec -it container-1 /bin/bash
+
+bin/partis annotate --infname /host/partis/home/fastafiles/HeavyChain.CH235.clone.wUCA.noIntermediates.fasta --outfname /host/partis/home/fastafiles/sample_yamls/HeavyChain.CH235.yaml --extra-annotation-columns cdr3_seqs:lengths:regional_bounds
+
+
+## Running partis on dcc
+
+# Set up conda environment
+
+# install requirements - /datacommons/dhvi/scripts/partis/python_scripts/requirements.txt. Might be helpful to create a new environment. 
+Bio==1.6.2
+pandas==1.4.3
+PyYAML==6.0.1
+yamlloader==1.1.0
+
+# or:
+pip install -r /datacommons/dhvi/scripts/partis/python_scripts/requirements.txt
+
+### Tumour reactive
+## Target files
+*RecombinationSummaries.RF.txt
+*CloneAssignments.txt
+*.RC.UMI.summary.txt
+*.isotypes_top12.csv
+*.RS.RF.fxnl.prod.human.txt
+*.SimpleMarkedUAs.tsv
+
+
+scriptDir=/datacommons/dhvi/scripts/partis/job_scripts
+runPartis=partis_NGS_optGermlines_optParitition_optChain.job
+
+### Additional customizations
+#  echo "USAGE: partis_NGS_optGermlines_optPartition_optChain.job" 
+#  echo "A version of python3 must be loaded that supports pandas. i.e. Python3.7 or above"
+#  echo "-f REQUIRED. Name of the unique filtered fasta file."
+#  echo "-p REQUIRED. Name of the path to the germline info."
+#  echo "-c FLAG. if set,clonal partitioning happens."
+#  echo "-l REQUIRED. Name of the locus - igh, igk,igl."
+#  echo "-s REQUIRED. Species -- human, mouse, rhesus, rearrange."
+#  echo "-d FLAG. If set, the D gene call is not required to be human to keep a sequence as human." 
+#  echo "-w REQUIRED. Full path to a directory to put the temporary partis files."
+#  echo "-m FLAG. If set, the MOTIF will be look for in human sequences. If DH270 then sets to motif=YYD and RF=2, and if DH511 thensets motif=FELW and RF=1."
+
+
+less $scriptDir/$runPartis
+
+$scriptDir/$runPartis -f /datacommons/dhvi/jes183/WiehiLab/tumour_reactive/heavy/tumor_reactive_heavy_sequence.fasta \
+ -p /datacommons/dhvi/partis_germlines/human/ \
+ -c -l igh -w /work/jes183/temp/ \
+ -s human
+ 
+ $scriptDir/$runPartis -f tumor_reactive_light_sequence.fasta \
+ -p /datacommons/dhvi/partis_germlines/human/ \
+ -c -l igh -w /datacommons/dhvi/jes183/software/TEMP \
+ -s human
+ 
+ 
+ #### Out
+ The filtered fasta file is /datacommons/dhvi/jes183/WiehiLab/tumour_reactive/heavy/tumor_reactive_heavy_sequence.fasta.
+The partis germline path is /datacommons/dhvi/partis_germlines/human/.
+The locus is igh.
+The partis intermediate files will be written to /work/jes183/temp/.
+The species is human.
+The partis intermediate files will be written to /work/jes183/temp/ which exists!
+/datacommons/dhvi/jes183/WiehiLab/tumour_reactive/heavy/tumor_reactive_heavy_sequence.summary_stats.txt exists!
+Submitted batch job 6288224
+Waiting for the jobs to finish.
+ls: cannot access '*.running': No such file or directory
+path yaml:
+/datacommons/dhvi/jes183/WiehiLab/tumour_reactive/heavy/tumor_reactive_heavy_sequence.partis.annotate.yaml
+yaml file is loaded
+yaml file is loaded
+find: warning: you have specified the global option -maxdepth after the argument -name, but global options are not positional, i.e., -maxdepth affects tests specified before it as well as those specified after it.  Please specify global options before other arguments.
+find: warning: you have specified the global option -maxdepth after the argument -name, but global options are not positional, i.e., -maxdepth affects tests specified before it as well as those specified after it.  Please specify global options before other arguments.
+find: warning: you have specified the global option -maxdepth after the argument -name, but global options are not positional, i.e., -maxdepth affects tests specified before it as well as those specified after it.  Please specify global options before other arguments.
+VALID         bool
+SMUA          bool
+FUNCTIONAL    bool
+PRODUCTIVE    bool
+PARTIAL_V     bool
+PARTIAL_J     bool
+dtype: object
+['VALID', 'SMUA', 'FUNCTIONAL', 'PRODUCTIVE']
+find: warning: you have specified the global option -maxdepth after the argument -name, but global options are not positional, i.e., -maxdepth affects tests specified before it as well as those specified after it.  Please specify global options before other arguments.
+
+ ### 
+ sbatch --partition dhvi --mem=25G --ntasks-per-node=10 --ntasks=10 --wrap="python /datacommons/dhvi/scripts/Python/Isotypes/get_isotypes_options.py -s [the SMUA file, doesn't need to be full path] -l [tumor_reactive_heavy_sequence.fasta] -n 50 -t 10 -f /datacommons/dhvi/partis_ASAP/speciesCH/humanCH.fas -g 1”
+ 
+ sbatch --partition dhvi --mem=25G --ntasks-per-node=10 --ntasks=10 --wrap="python /datacommons/dhvi/scripts/Python/Isotypes/get_isotypes_options.py -s tumor_reactive_heavy_sequence.SimpleMarkedUAs.fasta -l tumor_reactive_heavy_sequence.fasta -n 50 -t 10 -f /datacommons/dhvi/partis_ASAP/speciesCH/humanCH.fas -g 1"
+  
+#### Trouble shooting:
+
+## Should I be worried when I see this? ls: cannot access '*.running': No such file or directory path yaml  
+# No, that partis checking if the .running file is there. If it is it is progressing, and then when the partis run finishes the .running file is deleted and then you get that message above because it can't see the file any more which is good because it means the program is progressing.
+# An actual error would be if it progressed and didn't see a .yaml file, typically due to pyaml and yamlloader dependencies missing. but you can see that it does find the .yaml file so its all good. 
+
+## How about; find: warning: you have specified the global option -maxdepth after the argument -name, but global options are not positional, i.e., -maxdepth affects tests specified before it as well as those specified after it.  Please specify global options before other arguments.
+# Its not something you need to be worried about as it does not affect the scripts functioning, importantly, it found the yaml file. It might help to edit the script to make that cleaner. 
+  
