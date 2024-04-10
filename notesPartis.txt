@@ -41,7 +41,7 @@ docker exec -it container-1 /bin/bash
 bin/partis annotate --infname /host/partis/home/fastafiles/HeavyChain.CH235.clone.wUCA.noIntermediates.fasta --outfname /host/partis/home/fastafiles/sample_yamls/HeavyChain.CH235.yaml --extra-annotation-columns cdr3_seqs:lengths:regional_bounds
 
 
-## Running partis on dcc
+## Running partis on DCC
 
 # Set up conda environment
 
@@ -66,6 +66,7 @@ pip install -r /datacommons/dhvi/scripts/partis/python_scripts/requirements.txt
 
 scriptDir=/datacommons/dhvi/scripts/partis/job_scripts
 runPartis=partis_NGS_optGermlines_optParitition_optChain.job
+tempdir=/work/jes183/temp/   #some where in work or cwork with fast io.
 
 ### Additional customizations
 #  echo "USAGE: partis_NGS_optGermlines_optPartition_optChain.job" 
@@ -82,14 +83,24 @@ runPartis=partis_NGS_optGermlines_optParitition_optChain.job
 
 less $scriptDir/$runPartis
 
+# absolute paths for -f are required
+
 $scriptDir/$runPartis -f /datacommons/dhvi/jes183/WiehiLab/tumour_reactive/heavy/tumor_reactive_heavy_sequence.fasta \
  -p /datacommons/dhvi/partis_germlines/human/ \
- -c -l igh -w /work/jes183/temp/ \
+ -c -l igh -w $tempdir \
  -s human
  
- $scriptDir/$runPartis -f tumor_reactive_light_sequence.fasta \
+ ## light chain can be either lambda or kappa. Make sure you have only one chain in the input file.
+ ## You can use igblast to determine the chain if not explicityly indicated https://www.ncbi.nlm.nih.gov/igblast/igblast.
+ 
+ $scriptDir/$runPartis -f /datacommons/dhvi/jes183/WiehiLab/tumour_reactive/light/kappa/tumor_reactive_kappa_sequence.fasta \
  -p /datacommons/dhvi/partis_germlines/human/ \
- -c -l igh -w /datacommons/dhvi/jes183/software/TEMP \
+ -c -l igk -w $tempdir \
+ -s human
+ 
+ $scriptDir/$runPartis -f /datacommons/dhvi/jes183/WiehiLab/tumour_reactive/light/lambda/tumor_reactive_lambda_sequence.fasta \
+ -p /datacommons/dhvi/partis_germlines/human/ \
+ -c -l igl -w $tempdir \
  -s human
  
  
@@ -126,6 +137,10 @@ find: warning: you have specified the global option -maxdepth after the argument
  
  sbatch --partition dhvi --mem=25G --ntasks-per-node=10 --ntasks=10 --wrap="python /datacommons/dhvi/scripts/Python/Isotypes/get_isotypes_options.py -s tumor_reactive_heavy_sequence.SimpleMarkedUAs.fasta -l tumor_reactive_heavy_sequence.fasta -n 50 -t 10 -f /datacommons/dhvi/partis_ASAP/speciesCH/humanCH.fas -g 1"
   
+ ## light chains
+ sbatch --partition dhvi --mem=25G --ntasks-per-node=10 --ntasks=10 --wrap="python /datacommons/dhvi/scripts/Python/Isotypes/get_isotypes_options.py -s tumor_reactive_heavy_kappa.SimpleMarkedUAs.fasta -l tumor_reactive_heavy_kappa.fasta -n 50 -t 10 -f /datacommons/dhvi/partis_ASAP/speciesCH/humanCH.fas -g 1"
+ sbatch --partition dhvi --mem=25G --ntasks-per-node=10 --ntasks=10 --wrap="python /datacommons/dhvi/scripts/Python/Isotypes/get_isotypes_options.py -s tumor_reactive_heavy_lambda.SimpleMarkedUAs.fasta -l tumor_reactive_heavy_lambda.fasta -n 50 -t 10 -f /datacommons/dhvi/partis_ASAP/speciesCH/humanCH.fas -g 1"
+ 
 #### Trouble shooting:
 
 ## Should I be worried when I see this? ls: cannot access '*.running': No such file or directory path yaml  
