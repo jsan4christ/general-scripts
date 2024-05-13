@@ -1003,3 +1003,17 @@ duplicate       duplicate sequences N times
 
  cat tests/hairpin.fa | seqkit head -n 1 \
     | seqkit duplicate -n 2 | seqkit rename
+    
+Vim s/'/_/g for a single line or %s/'/_/g
+
+
+debug/undebug with // options(error = browser)
+# http://adv-r.had.co.nz/Exceptions-Debugging.html#debugging-techniques
+# There are three key debugging tools:
+# RStudio’s error inspector and traceback() which list the sequence of calls that lead to the error.
+# RStudio’s “Rerun with Debug” tool and options(error = browser) which open an interactive session where the error occurred.
+# RStudio’s breakpoints and browser() which open an interactive session at an arbitrary location in the code.
+
+trace(var, browser, at=6)
+
+#https://stackoverflow.com/questions/22000969/how-to-debug-placing-break-point-etc-an-installed-r-package-in-rstudio

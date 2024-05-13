@@ -799,6 +799,7 @@ augur refine \
   --metadata data/metadata.tsv \
   --output-tree results/tree.nwk \
   --output-node-data results/branch_lengths.json \
+  --stochastic-resolve \
   --timetree \
   --coalescent opt \
   --date-confidence \
@@ -809,7 +810,7 @@ augur traits \
   --tree results/tree.nwk \
   --metadata data/metadata.tsv \
   --output-node-data results/traits.json \
-  --columns region country \
+  --columns cluster_id Country \
   --confidence
   
 augur ancestral \
@@ -817,3 +818,67 @@ augur ancestral \
   --alignment results/aligned.fasta \
   --output-node-data results/nt_muts.json \
   --inference joint
+  
+augur translate \
+  --tree results/tree.nwk \
+  --ancestral-sequences results/nt_muts.json \
+  --reference-sequence config/K03455.gb \
+  --output-node-data results/aa_muts.json
+  
+augur export v2 \
+  --tree results/tree.nwk \
+  --metadata data/metadata.tsv \
+  --node-data results/branch_lengths.json \
+              results/traits.json \
+              results/nt_muts.json \
+              results/aa_muts.json \
+  --colors config/colors.tsv \
+  --lat-longs config/lat_longs.tsv \
+  --auspice-config config/auspice_config.json \
+  --output auspice/hiv_tn93_s1.json
+  
+  ## New tree
+  
+  # sed '/^>/! s/\^//g' <seq2.fa >seq3.fa
+  
+  sed '/^>/ s/:/_/g' < selected_uniq_seqs_g_augur_aln.fasta  > selected_uniq_seqs_g_augur_aln_R1.fasta #remove : colons from sequence names.
+  sed '/^>/ s/\'/_/g' < selected_uniq_seqs_g_augur_aln_R1.fasta > selected_uniq_seqs_g_augur_aln.fasta #remove 's colons from sequence names.
+  sed '/^>/ s/--/_/g' < selected_uniq_seqs_g_augur_aln_R1.fasta  > selected_uniq_seqs_g_augur_aln.fasta
+  
+  FastTree -nt -gtr -gamma -boot 100 selected_uniq_seqs_g_augur_aln_R1.fasta > selected_uniq_seqs_g_augur_aln_R1.fast.tree
+  
+  sed 's/--/_/g' < selected_uniq_seqs_g_augur_aln_R1.fast.nwk  > selected_uniq_seqs_g_augur_aln.fast.nwk
+
+  
+  ## I could not get sed to replace the ', so I used it within vim.
+  s/--/_/g for a single line or %s/'/_/g for the whole document.
+  
+  ## Also drop # (pound) signs from the Japanese sequences
+  
+  ## File name in Newick
+
+  bootstrap=0.7
+  geneticDistances=10
+  maxClusterSize=8000
+  
+  Japan/#117.186940871.AB428551/2000  #11 more with #
+  
+  java –jar /Applications/biotools/ClusterPicker/ClusterPicker_1.2.5.jar selected_uniq_seqs_g_augur_aln_R1.fasta selected_uniq_seqs_g_augur_aln_R1_bf.fast.nwk $bootstrap $bootstrap $geneticDistance $maxClusterSize
+
+seqkit rmdup --ignore-case refs_aln.fasta -o refs_aln_uniq.fasta --dup-seqs-file refs_aln_dups.fasta --dup-num-file refs_aln_dups.txt
+
+seqkit grep -rf d_seq_names.txt selected_uniq_seqs_g_augur_aln_R1.fasta > d_seqs.fasta
+cat refs_aln_uniq.fasta d_seqs.fasta > d_wRefs.fasta
+
+for i in `cat rename.txt`;  do  on=$(echo $i | cut -d "," -f1);  nn=$(echo $i | cut -d "," -f2);  sed -i '' "s#$on#$nn#g" d_wRefs.fasta;  done
+
+
+FastTree -nt -gtr -gamma -boot 100 d_wRefs.fasta > d_wRefs.boot.fast.tree
+
+
+### Untrimmed tree
+FastTree -nt -gtr -gamma -boot 100 selected_uniq_seqs_gg_mafft.fasta > selected_uniq_seqs_g_mafft.boot.fast.tree
+
+virulign ../NC_001802.1-mod3.fasta ~/Google\ Drive/My\ Drive/Pangea/Analysis/sequences.fasta --exportAlphabet Nucleotides --exportReferenceSequence yes --exportWithInsertions yes --exportKind GlobalAlignment --progress yes > sequences.virulign.fasta 2> error.file
+virulign ../NC_001802.1-coding.fasta ~/Google\ Drive/My\ Drive/Pangea/Analysis/sequences.fasta --exportAlphabet Nucleotides --exportReferenceSequence yes --exportWithInsertions yes --exportKind GlobalAlignment --progress yes > sequences.coding.virulign.fasta 2> error-coding.file
+ 

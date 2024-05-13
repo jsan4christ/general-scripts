@@ -135,7 +135,7 @@ find: warning: you have specified the global option -maxdepth after the argument
  ### 
  sbatch --partition dhvi --mem=25G --ntasks-per-node=10 --ntasks=10 --wrap="python /datacommons/dhvi/scripts/Python/Isotypes/get_isotypes_options.py -s [the SMUA file, doesn't need to be full path] -l [tumor_reactive_heavy_sequence.fasta] -n 50 -t 10 -f /datacommons/dhvi/partis_ASAP/speciesCH/humanCH.fas -g 1”
  
- sbatch --partition dhvi --mem=25G --ntasks-per-node=10 --ntasks=10 --wrap="python /datacommons/dhvi/scripts/Python/Isotypes/get_isotypes_options.py -s tumor_reactive_heavy_sequence.SimpleMarkedUAs.fasta -l tumor_reactive_heavy_sequence.fasta -n 50 -t 10 -f /datacommons/dhvi/partis_ASAP/speciesCH/humanCH.fas -g 1"
+ sbatch --partition dhvi --mem=25G --ntasks-per-node=10 --ntasks=10 --wrap="python /datacommons/dhvi/scripts/Python/Isotypes/get_isotypes_options.py -s tumor_reactive_heavy_sequence.SimpleMarkedUAs.fasta -l tumor_reactive_heavy_sequence_1L.fasta -n 50 -t 10 -f /datacommons/dhvi/partis_ASAP/speciesCH/humanCH.fas -g 1"
   
  ## light chains
  sbatch --partition dhvi --mem=25G --ntasks-per-node=10 --ntasks=10 --wrap="python /datacommons/dhvi/scripts/Python/Isotypes/get_isotypes_options.py -s tumor_reactive_heavy_kappa.SimpleMarkedUAs.fasta -l tumor_reactive_heavy_kappa.fasta -n 50 -t 10 -f /datacommons/dhvi/partis_ASAP/speciesCH/humanCH.fas -g 1"
@@ -150,3 +150,5 @@ find: warning: you have specified the global option -maxdepth after the argument
 ## How about; find: warning: you have specified the global option -maxdepth after the argument -name, but global options are not positional, i.e., -maxdepth affects tests specified before it as well as those specified after it.  Please specify global options before other arguments.
 # Its not something you need to be worried about as it does not affect the scripts functioning, importantly, it found the yaml file. It might help to edit the script to make that cleaner. 
   
+ heavy/tumor_reactive_heavy_sequence.VDJ.VALID.SMUA.FUNCTIONAL.PRODUCTIVE.fasta
+ 

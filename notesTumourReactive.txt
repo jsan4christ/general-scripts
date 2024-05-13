@@ -1,0 +1,112 @@
+bioawk -c fastx '{print $name "\t" $seq}'  75501.SimpleMarkedUAs.fasta > 75501.SimpleMarkedUAs.tsv
+
+
+bioawk -c fastx '{print $name "\t" $seq}'  tumor_reactive_heavy_sequence.fasta	> tumor_reactive_heavy_sequence.tsv
+bioawk -c fastx '{print $name "\t" $seq}'  tumor_reactive_light_sequence.fasta	> tumor_reactive_light_sequence.tsv
+
+mafft  --auto  tumor_reactive_heavy_sequence.fasta > tumor_reactive_heavy_sequence_aln.fasta
+bioawk -c fastx '{print $name "\t" $seq}'  tumor_reactive_heavy_sequence_aln.fasta > tumor_reactive_light_sequence_aln.tsv
+
+# Igblast->change0
+
+srun -p dhvi --mem=128G --exclude=dcc-dhvi-12 --pty bash -i
+
+IGBLASTDIR=/hpc/home/jes183/ncbi-igblast-1.22.0
+GERMLINE_DB=/hpc/home/jes183/imgt_igblast_db/human
+BLASTDB=/hpc/home/jes183/imgt_igblast_db/human
+export IGDATA=/hpc/home/jes183/ncbi-igblast-1.22.0
+
+
+WORKDIR=/datacommons/dhvi/jes183/WieheLab/tumour_reactive/heavy
+FILE=tumor_reactive_heavy_sequence
+
+### Heavy chain
+
+igblastn -germline_db_V "${GERMLINE_DB}/human_V" \
+    -germline_db_D "${GERMLINE_DB}/human_D" \
+    -germline_db_J "${GERMLINE_DB}/human_J" \
+    -auxiliary_data "${IGBLASTDIR}/optional_file/human_gl.aux" \
+    -domain_system imgt -ig_seqtype Ig -organism human \
+    -outfmt '7 std qseq sseq btop' \
+    -c_region_db "${GERMLINE_DB}/ncbi_human_c_genes" \
+    -num_threads 64 \
+    -query "${WORKDIR}/${FILE}.fasta" \
+    -out "${FILE}_tab.igblast.fmt7"
+
+# convert IgBLAST output to AIRR format
+ MakeDb.py igblast -i "${FILE}_tab.igblast.fmt7" -s "${WORKDIR}/${FILE}.fasta"  -r "${GERMLINE_DB}/IGV.fasta" "${GERMLINE_DB}/IGDfasta" "${GERMLINE_DB}/IGJ.fasta" --extended
+
+ParseDb.py select -d ${FILE}_tab.igblast_db-pass.tsv -f productive -u T
+    
+DefineClones.py -d ${FILE}_tab.igblast_db-pass_parse-select.tsv --act set --model lv --norm len --dist 0.16
+    
+CreateGermlines.py -d ${FILE}_tab.igblast_db-pass_parse-select_clone-pass.tsv -g dmask --cloned -r "${GERMLINE_DB}/IGV.fasta" "${GERMLINE_DB}/IGD.fasta" "${GERMLINE_DB}/IGJ.fasta"
+    
+BuildTrees.py -d ${FILE}_tab.igblast_db-pass_parse-select_clone-pass_germ-pass.tsv --outname ex --log ex.log --collapse \
+    --sample 3000 --igphyml --clean all --nproc 5
+    
+    
+### Can I combine heavy and light chain? what does that look like?
+
+cat heavy/tumor_reactive_heavy_sequence.fasta light/tumor_reactive_light_sequence.fasta > tumor_reactive_heavy_and_light_sequences.fasta
+
+WORKDIR=/datacommons/dhvi/jes183/WieheLab/tumour_reactive
+FILE=tumor_reactive_heavy_and_light_sequences
+
+
+igblastn -germline_db_V "${GERMLINE_DB}/human_V" \
+    -germline_db_D "${GERMLINE_DB}/human_D" \
+    -germline_db_J "${GERMLINE_DB}/human_J" \
+    -auxiliary_data "${IGBLASTDIR}/optional_file/human_gl.aux" \
+    -domain_system imgt -ig_seqtype Ig -organism human \
+    -outfmt '7 std qseq sseq btop' \
+    -c_region_db "${GERMLINE_DB}/ncbi_human_c_genes" \
+    -num_threads 64 \
+    -query "${WORKDIR}/${FILE}.fasta" \
+    -out "${FILE}_tab.igblast.fmt7"
+
+# convert IgBLAST output to AIRR format
+ MakeDb.py igblast -i "${FILE}_tab.igblast.fmt7" -s "${WORKDIR}/${FILE}.fasta"  -r "${GERMLINE_DB}/IGV.fasta" "${GERMLINE_DB}/IGDfasta" "${GERMLINE_DB}/IGJ.fasta" --extended
+
+ParseDb.py select -d ${FILE}_tab.igblast_db-pass.tsv -f productive -u T
+    
+DefineClones.py -d ${FILE}_tab.igblast_db-pass_parse-select.tsv --act set --model ham --norm len --dist 0.16
+    
+CreateGermlines.py -d ${FILE}_tab.igblast_db-pass_parse-select_clone-pass.tsv -g dmask --cloned -r "${GERMLINE_DB}/IGV.fasta" "${GERMLINE_DB}/IGD.fasta" "${GERMLINE_DB}/IGJ.fasta"
+    
+BuildTrees.py -d ${FILE}_tab.igblast_db-pass_parse-select_clone-pass_germ-pass.tsv --outname ex --log ex.log --collapse \
+    --sample 3000 --igphyml --clean all --nproc 5
+    
+https://bitbucket.org/kleinstein/immcantation/src/master/scripts/
+
+# Several Immcantation tools require the observed V(D)J sequence (sequence_alignment) and associated germline fields 
+# (germline_alignment or germline_alignment_d_mask) to have gaps inserted to conform to the IMGT numbering scheme. 
+# Thus, when a tool such as MakeDb.py or CreateGermlines.py requires a reference sequence set as input, it will 
+# required the IMGT-gapped reference set. Meaning, the reference sequences that were downloaded using the fetch_imgtdb.sh 
+# script, or downloaded manually from the IMGT reference directory, rather than the final upgapped reference set required by IgBLAST.
+
+imgtDB=/datacommons/dhvi/jes183/software/igblastDB/germlines/imgt/human
+
+ MakeDb.py igblast -i "${FILE}_tab.igblast.fmt7" -s "${WORKDIR}/${FILE}.fasta"  -r "${imgtDB}/vdj/imgt_human_IGHV.fasta"  "${imgtDB}/vdj/imgt_human_IGHD.fasta" "${imgtDB}/vdj/imgt_human_IGHJ.fasta" \
+ "${imgtDB}/vdj/imgt_human_IGKV.fasta"  "${imgtDB}/vdj/imgt_human_IGKJ.fasta" "${imgtDB}/vdj/imgt_human_IGLV.fasta" "${imgtDB}/vdj/imgt_human_IGLJ.fasta"  --extended
+
+
+## Try to process only light chain
+igblastDB=/datacommons/dhvi/jes183/software/igblastDB/germlines/igblast/database
+
+
+FILE=light/tumor_reactive_light_sequence
+
+igblastn -germline_db_V "${igblastDB}/imgt_human_ig_v" \
+    -germline_db_D "${igblastDB}/imgt_human_ig_d" \
+    -germline_db_J "${igblastDB}/imgt_human_ig_j" \
+    -auxiliary_data "${IGBLASTDIR}/optional_file/human_gl.aux" \
+    -domain_system imgt -ig_seqtype Ig -organism human \
+    -outfmt '7 std qseq sseq btop' \
+    -c_region_db "${igblastDB}/imgt_human_ig_c" \
+    -num_threads 64 \
+    -query "${WORKDIR}/${FILE}.fasta" \
+    -out "${WORKDIR}/${FILE}_tab.igblast.fmt7"
+
+ MakeDb.py igblast -i "${WORKDIR}/${FILE}_tab.igblast.fmt7" -s "${WORKDIR}/${FILE}.fasta"  -r "${imgtDB}/vdj/imgt_human_IGHV.fasta"  "${imgtDB}/vdj/imgt_human_IGHD.fasta" "${imgtDB}/vdj/imgt_human_IGHJ.fasta" \
+ "${imgtDB}/vdj/imgt_human_IGKV.fasta"  "${imgtDB}/vdj/imgt_human_IGKJ.fasta" "${imgtDB}/vdj/imgt_human_IGLV.fasta" "${imgtDB}/vdj/imgt_human_IGLJ.fasta"  --extended
